@@ -10,7 +10,8 @@ class PropellerLoad:
 
     def __init__(self):
         self.propellerLoadExecutables = {
-            "Windows": "/propeller-tools/windows/propeller-load.exe"
+            "Windows": "/propeller-tools/windows/propeller-load.exe",
+            "Linux": "/propeller-tools/linux/propeller-load"
         }
 
         if not self.propellerLoadExecutables[platform.system()]:
