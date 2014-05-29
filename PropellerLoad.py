@@ -3,7 +3,6 @@ __author__ = 'Michel'
 import platform
 import os
 import subprocess
-import json
 
 
 class PropellerLoad:
@@ -30,7 +29,8 @@ class PropellerLoad:
     def get_ports(self):
         process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE)
         out, err = process.communicate()
-        return json.dumps(out.splitlines())
+#        return json.dumps(out.splitlines())
+        return out.splitlines()
 
     def load(self, action, file_to_load, com_port):
         executable = self.appdir + self.propeller_load_executables[platform.system()]

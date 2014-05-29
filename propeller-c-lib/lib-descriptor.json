@@ -1,0 +1,32 @@
+[
+    {
+        "name": "simpletools",
+        "libdir": "Utility/libsimpletools",
+        "include": [
+            "simpletools"
+        ],
+        "memorymodel": {
+            "cmm": "Utility/libsimpletools/cmm/"
+        }
+    },
+    {
+        "name": "simpletext",
+        "libdir": "Text Devices/libsimpletext",
+        "include": [
+            "simpletools"
+        ],
+        "memorymodel": {
+            "cmm": "Text Devices/libsimpletext/cmm/"
+        }
+    },
+    {
+        "name": "simplei2c",
+        "libdir": "Protocol/libsimplei2c",
+        "include": [
+            "simpletools"
+        ],
+        "memorymodel": {
+            "cmm": "Protocol/libsimplei2c/cmm/"
+        }
+    }
+]
