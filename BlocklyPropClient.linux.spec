@@ -8,7 +8,7 @@ pyz = PYZ(a.pure)
 exe = EXE(pyz,
           a.scripts,
           exclude_binaries=True,
-          name='BlocklyPropClient.exe',
+          name='BlocklyPropClient',
           debug=False,
           strip=None,
           upx=True,
@@ -24,7 +24,7 @@ coll = COLLECT(exe,
                propeller_libs_and_tools,
                strip=None,
                upx=True,
-               name='BlocklyPropClient')
+               name='linux')
 
 # Analysis
 #             pathex=['D:\\Development\\python\\BlocklyPropClient'],

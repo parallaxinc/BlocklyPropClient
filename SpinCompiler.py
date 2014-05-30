@@ -12,7 +12,7 @@ class SpinCompiler:
         self.propeller_loader = propeller_loader
         self.compiler_executables = {
             "Windows": "/propeller-tools/windows/openspin.exe",
-            "Linux": "/propeller-tools/windows/openspin",
+            "Linux": "/propeller-tools/linux/openspin",
             "MacOS": "/propeller-tools/mac/openspin"
         }
 
@@ -58,6 +58,7 @@ class SpinCompiler:
         binary_file.close()
 
         executable = self.appdir + self.compiler_executables[platform.system()]
+	print executable
         lib_directory = self.appdir + "/propeller-lib"
 
         executing_data = [executable, "-o", binary_file.name, "-L", lib_directory]
