@@ -28,7 +28,7 @@ Building
 If you want to create an executable to distribute to users:
 
 Install pyinstaller (using pip) and do:
-pyinstaller BlocklyPropClient.xxxxxxx?.spec
+pyinstaller BlocklyPropClient.xxxxxxx.spec
 
 where you replace xxxxx by your OS. The distributable folder is available under the dist directory.
 
