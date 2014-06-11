@@ -12,7 +12,7 @@ from PropCCompiler import  PropCCompiler
 
 
 PORT = 6009
-VERSION = 0.1
+VERSION = 0.2
 
 class BlocklyServer(object):
 
