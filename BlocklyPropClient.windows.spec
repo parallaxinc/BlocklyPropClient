@@ -14,7 +14,7 @@ exe = EXE(pyz,
           upx=True,
           console=True,
           icon='blocklyprop.ico' )
-propeller_libs_and_tools = Tree('propeller-tools', prefix='propeller-tools', excludes=['*.pdf'])
+propeller_libs_and_tools = Tree('propeller-tools', prefix='propeller-tools', excludes=['*.pdf', 'linux', 'mac'])
 propeller_libs_and_tools += Tree('propeller-lib', prefix='propeller-lib')
 propeller_libs_and_tools += Tree('propeller-c-lib', prefix='propeller-c-lib', excludes=['*.html', 'html', '*.doxyfile', '*.side', '*.c'])
 coll = COLLECT(exe,
@@ -24,7 +24,7 @@ coll = COLLECT(exe,
                propeller_libs_and_tools,
                strip=None,
                upx=True,
-               name='windows')
+               name='BlocklyPropClient.windows')
 
 # Analysis
 #             pathex=['D:\\Development\\python\\BlocklyPropClient'],
