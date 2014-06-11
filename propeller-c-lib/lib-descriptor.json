@@ -11,12 +11,12 @@
     },
     {
         "name": "simpletext",
-        "libdir": "Text Devices/libsimpletext",
+        "libdir": "TextDevices/libsimpletext",
         "include": [
             "simpletools"
         ],
         "memorymodel": {
-            "cmm": "Text Devices/libsimpletext/cmm/"
+            "cmm": "TextDevices/libsimpletext/cmm/"
         }
     },
     {
@@ -27,6 +27,26 @@
         ],
         "memorymodel": {
             "cmm": "Protocol/libsimplei2c/cmm/"
+        }
+    },
+    {
+        "name": "abdrive",
+        "libdir": "Robotics/ActivityBot/libabdrive",
+        "include": [
+            "abdrive"
+        ],
+        "memorymodel": {
+            "cmm": "Robotics/ActivityBot/libabdrive/cmm/"
+        }
+    },
+    {
+        "name": "fdserial",
+        "libdir": "TextDevices/libfdserial",
+        "include": [
+            "abdrive"
+        ],
+        "memorymodel": {
+            "cmm": "TextDevices/libfdserial/cmm/"
         }
     }
 ]

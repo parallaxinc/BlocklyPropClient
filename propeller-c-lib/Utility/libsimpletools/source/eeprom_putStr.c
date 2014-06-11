@@ -16,28 +16,29 @@
 
 #include "simpletools.h"                      // simpletools function prototypes
 
-i2c *eeprom;
-int eeInitFlag;
+i2c *st_eeprom;
+int st_eeInitFlag;
 
 void ee_init();
 
 
 void ee_putStr(unsigned char *s, int n, int addr)
 {
-  unsigned char addrArray[2];
-  if(!eeInitFlag) ee_init();
+  //unsigned char addrArray[2];
+  if(!st_eeInitFlag) ee_init();
 
   while(n > 0)
   {
-    addrArray[0] = (char)(addr >> 8);
-    addrArray[1] = (char)(addr&0xFF);
+    //addrArray[0] = (char)(addr >> 8);
+    //addrArray[1] = (char)(addr&0xFF);
 
     int pageAddr = addr % 128;
     int byteCnt = 128 - pageAddr;
     if(byteCnt > n) byteCnt = n;
 
-    i2c_out(eeprom, 0xA0, addrArray, 2, s, byteCnt);
-    while(i2c_poll(eeprom, 0xA0));
+    //i2c_out(st_eeprom, 0xA0, addrArray, 2, s, byteCnt);
+    i2c_out(st_eeprom, 0x50, addr, 2, s, byteCnt);
+    while(i2c_poll(st_eeprom, 0xA0));
 
     n -= byteCnt;
     addr += byteCnt;

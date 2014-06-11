@@ -135,7 +135,7 @@ void servo(void *par)                                // servo process in other c
 
   int s = sizeof(p)/sizeof(int);                     // Get size of servo array
   int i;                                             // Local index variable
-  mark();                                            // Mark the current time
+  //mark();                                            // Mark the current time
   while(1)                                           // servo control loop
   {
     while(lockset(lockID));                          // Set the lock 
@@ -200,12 +200,14 @@ static int ta = 0, tb = 0, dta = 0, dtb = 0;
 
 void pulse_outCtr(int pin, int time)                 // pulseOut function definition
 {
-  if(iodt == 0)
+  /*
+  if(st_iodt == 0)
   {
     set_io_dt(CLKFREQ/1000000);
     set_io_timeout(CLKFREQ/4);
   }
-  signed long phsVal = -time * iodt;
+  */
+  signed long phsVal = -time * st_iodt;
   int ctr = 0;
   int frq = 1;
   int phs = 0;

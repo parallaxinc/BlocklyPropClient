@@ -1,14 +1,12 @@
-/**                                                                             
+/**
  * @file simpletools.h
  *
  * @author Andy Lindsay
  *
- * @version 0.96 (see details for more info)
- *
  * @copyright
- * Copyright (C) Parallax, Inc. 2013. All Rights MIT Licensed.
+ * Copyright (C) Parallax, Inc. 2014. All Rights MIT Licensed.
  *
- * @brief This library provides convenience functions 
+ * @brief This library provides convenient functions 
  * for a variety of microcontroller I/O, timing, conversion, and  
  * communication tasks.  This library also includes (and you can 
  * call functions from) 
@@ -18,17 +16,7 @@
  * <a target="blank" href="../../../Text%20Devices/libsimpletext/
  * Documentation%20serial%20Library.html">serial</a>.  
  *
- * <b>NOTE:</b> If you want to update old projects to work with this version
- * of simpletools, you may need to manually use the Add Simple Library button
- * to add .../SimpleIDE/Learn/Text Devices/libsimpletext.  
- *
- * <b><i>CONSTRUCTION ZONE:</i></b> This library is still preliminary, 
- * revisions pending.
- * @n @n dac_ctr, square_wave, and all pwm functions, are currently  
- * only supported by the LMM and CMM memory models.  
- *
- * @details This (under development) library provides a set of
- * introductory functions that simplify:
+ * @details This library provides a set of introductory functions that simplify:
  *  
  * @li I/O control - convenient I/O pin monitoring and control functions
  * @li Timing - Delays, timeouts
@@ -57,25 +45,59 @@
  * adding libraries to support and endless variety of peripherals
  * and applications.
  *
- * Revision 0.91 shift_in function pre-clock mode bug fixed. @n @n
- * Revision 0.92 Simpletext functionality incorporated for use of
- * character and string I/O with both terminal and peripheral devices.
- * Simple Text folder replaces PropGCC serial driver support for simple
- * and full duplex serial peripherals. @n @n
- * Revision 0.93 i2c_newbus now uses @n
+ * @par Core Usage
+ * Any of these functions, if called, will launch a process into another cog
+ * and leave it launched for set it/forget it processes:
+ * 
+ * @li cog_run (1 cog per call)
+ * @li squareWave (1 cog)
+ * @li pwm (1 cog)
+ * @li dac (1 cog)
+ *
+ * @par Memory Models
+ * Use with CMM, LMM.
+ * 
+ * @version
+ * 0.98 fpucog floating point coprocessor no longer self-starts by default.  
+ * All floating point functionality is still supported, processing just happens in
+ * the same cog.  i2c_out and i2c_in char regAddr parameter changed to int memAddr. 
+ * itoa removed, use sprint(charArray, "%d", intVal) to make int to ASCII 
+ * conversions.  st_msTicks and st_usTicks global variables are pre-initialized to the 
+ * number of system clock ticks in a millisecond and microsecond for convenience in
+ * library development.  Variables named us and ms are initialized to the same values 
+ * for user applications.  Function endianSwap added to simplify communication with 
+ * devices that send/receive byte data in big endian format.
+ * @par
+ * 0.97 Add cog_run and cog_end for simplified running of functioncode in other cogs.
+ * @par
+ * 0.96.1 Add documentation for start_fpu_cog and stop_fpu_cog.
+ * @par
+ * 0.96 ee_putStr updated to support 128 byte page writes.  More corrections to ee_put
+ * for contiguous data crossing address/128 boundary.
+ * @par
+ * 0.95 square_wave bug that prevented output frequency changes
+ * (fixed).
+ * @par
+ * 0.94 Fixed bug in ee_put* that prevented contiguous data from crossing the EEPROM's 
+ * address/128 buffer boundaries.  Updated stack array to static in mstimer.c.
+ * @par
+ * 0.93 i2c_newbus now uses @n
  *   .../Learn/Simple Libraries/Protocol/simplei2c/@n 
  * Added:@n
- *   i2c_out, i2c_in to cover most common I2C slave applications
+ *   i2c_out, i2c_in to cover most common I2C applications
  * EEPROM ee_get_* and ee_put_* changed to ee_get* and ee_put* where 
- * the * term is camel-case. @n @n
- * Revision 0.94 Fixed bug in ee_put* that prevented contiguous data
- * from crossing the EEPROM's address/128 buffer boundaries.  Updated
- * stack array to static in mstimer.c.@n@n
- * Revision 0.95 square_wave bug that prevented output frequency changes
- * (fixed). @n@n
- * Revision 0.96 ee_putStr updated to support 128 byte page writes.  More
- * corrections to ee_put* for contiguous data crossing address/128 boundary.
- * Revision 0.96.1 Add documentation for start_fpu_cog and stop_fpu_cog.
+ * the * term is camel-case.
+ * @par
+ * 0.92 Simpletext functionality incorporated for use of
+ * character and string I/O with both terminal and peripheral devices.
+ * Simple Text folder replaces PropGCC serial driver support for simple
+ * and full duplex serial peripherals.
+ * @par
+ * 0.91 shift_in function pre-clock mode bug fixed. @n @n
+ * 
+ * @par Help Improve this Library
+ * Please submit bug reports, suggestions, and improvements to this code to
+ * editor@parallax.com.
  */
 
 #ifndef SIMPLETOOLS_H
@@ -100,127 +122,421 @@ extern "C" {
 #include <math.h>
 #include "simplei2c.h"
 
-// Global variables shared by functions in separate files
-extern long iodt;
-extern long t_timeout;
-extern long pauseTicks;
-extern long t_mark;
-extern char setForget;
-extern int fdserDriverIndex;
-extern unsigned int buscnt;
-extern i2c *eeprom;
-extern int eeInitFlag;
 
-//extern i2c *eeprom;
-//extern int dacCtrBits;
+/**
+ * @brief Propeller system clock ticks in 1 millisecond (ms).
+ */
+extern int ms;
+
+
+/**
+ * @brief Propeller system clock ticks in 1 millisecond (us).
+ */
+extern int us;
+
+
+
+/**
+ * @name Private (used by simpletools library)
+ * @{
+ */
+
+
+
+/**
+ * @brief Propeller system clock ticks in 1 millisecond.  Changing this value is
+ * not recommended because it can affect library performance.
+ */
+extern int st_msTicks;
+
+
+/**
+ * @brief Propeller system clock ticks in 1 microsecond.  Changing this value is
+ * not recommended because it can affect library performance.
+ */
+extern int st_usTicks;
+
+
+/**
+ * @brief Clock ticks in a time increment used by pulse_in, pulse_out, and rc_time.
+ * Default value is the number of system clock ticks in a microsecond = CLKFREQ/1000000.
+ */
+extern int st_iodt;
+
+/**
+ * @brief Clock ticks in a time increment used by pulse_in, pulse_out, and rc_time.
+ * Default value is the number of system clock ticks in 1/4 s = CLKFREQ/4.
+ */
+extern int st_timeout;
+
+/**
+ * @brief Clock ticks in a time increment used by pause function.  Default value is the 
+ * number of system clock ticks in 1/1000 s = CLKFREQ/1000.
+ */
+extern int st_pauseTicks;
+
+/**
+ * @brief Variable shared by mark and time_out functions.
+ */
+extern int st_mark;
+
+/**
+ * @brief Variable used by i2c_newbus.
+ */
+extern unsigned int st_buscnt;
+
+/**
+ * @brief The busID for the Propeller Activity Board's EEPROM bus.
+ */
+extern i2c *st_eeprom;
+
+/**
+ * @brief Initialization flag used by ee_ functions.
+ */
+extern int st_eeInitFlag;
+
+
+/**
+ * @}
+ */
+
+ 
  
 #ifndef PI
+/**
+ * @brief 3.141592653589793
+ */
 #define PI 3.141592653589793
 #endif
 
-#ifndef EEPROM_ADDR
-#define EEPROM_ADDR	 0xA0 >> 1
-#endif
+
+
+/**
+ * @name SimpleIDE Terminal Constants
+ * @{
+ */
+
+
 
 /* Values for use with SimpleIDE Terminal */
 #ifndef HOME
+/**
+ * @brief HOME character (1) sends SimpleIDE Terminal's cursor to top-left "home" position.
+ */
 #define HOME   (1)
 #endif
+
 #ifndef CRSRXY
+/**
+ * @brief CRSRXY character (2) sends cursor to a certain number of spaces over (X)
+ * and returns (Y) down from SimpleIDE Terminal's top-left HOME position.  This 
+ * character has to be followed immediately by the X and Y values when transmitted
+ * to the SimpleIDE Terminal. 
+ */
 #define CRSRXY (2)
 #endif
+
 #ifndef CRSRLF
+/**
+ * @brief CRSRLF character (3) sends the SimpleIDE Terminal's cursor one column 
+ * (space) to the left of its current position.
+ */
 #define CRSRLF (3)
 #endif
+
 #ifndef CRSRRT
+/**
+ * @brief CRSRRT character (4) sends the SimpleIDE Terminal's cursor one column 
+ * (space) to the right of its current position.
+ */
 #define CRSRRT (4)
 #endif
+
 #ifndef CRSRUP
+/**
+ * @brief CRSRUP character (5) sends the SimpleIDE Terminal's cursor one row 
+ * (carriage return) upward from its current position.
+ */
 #define CRSRUP (5)
 #endif
+
 #ifndef CRSRDN
+/**
+ * @brief CRSRDN character (6) sends the SimpleIDE Terminal's cursor one row 
+ * (carriage return) downward from its current position.
+ */
 #define CRSRDN (6)
 #endif
+
 #ifndef BEEP
+/**
+ * @brief BEEP character (7) makes the system speaker in some computers beep 
+ * when received by SimpleIDE Terminal.
+ */
 #define BEEP   (7)
 #endif
+
 #ifndef BKSP
+/**
+ * @brief BKSP character (8) sends the SimpleIDE Terminal's cursor one column 
+ * (space) to the left of its current position and erases whatever character 
+ * was there.
+ */
 #define BKSP   (8)
 #endif
+
 #ifndef TAB
+/**
+ * @brief TAB character (9) advances the cursor to the right by a tab's worth 
+ * of spaces.  
+ */
 #define TAB    (9)
 #endif
+
 #ifndef NL
+/**
+ * @brief NL character (10) sends the SimpleIDE Terminal's cursor to the leftmost
+ * character in the next line down.
+ */
 #define NL     (10)
 #endif
+
 #ifndef LF
+/**
+ * @brief LF is same as NL.
+ */
 #define LF     (10)
 #endif
+
 #ifndef CLREOL
+/**
+ * @brief CLREOL character (11) erases all SimpleIDE Terminal characters to the 
+ * right of the cursor.
+ */
 #define CLREOL (11)
 #endif
+
 #ifndef CLRDN
+/**
+ * @brief CLRDN character (12) erases all SimpleIDE Terminal characters below the 
+ * cursor.
+ */
 #define CLRDN  (12)
 #endif
+
 #ifndef CR
+/**
+ * @brief CR character (13) sends SimpleIDE Terminal's cursor one row
+ * downward.
+ */
 #define CR     (13)
 #endif
+
 #ifndef CRSRX
+/**
+ * @brief CRSRX character (14) positions SimpleIDE Terminal's cursor X characters
+ * from the its left edge.
+ */
 #define CRSRX  (14)
 #endif
+
 #ifndef CRSRY
+/**
+ * @brief CRSRY character (15) sends SimpleIDE Terminal's cursor Y rows to the 
+ * from its top edge.  
+ */
 #define CRSRY  (15)
 #endif
+
 #ifndef CLS
+/**
+ * @brief CLS character (16) clears SimpleIDE's screen, erasing all characters and
+ * placing the cursor in the top-left corner.
+ */
 #define CLS    (16)
 #endif
 
 
-// Values for use with shift_in
+
+/**
+ * @}
+ *
+ * @name SPI Constants for shift_in & shift_out
+ * @{
+ */
+
+
+
 #ifndef   MSBPRE     
+/**
+ * @brief For use with shift_in.  Stands for most significant bit first, pre-clock.
+ */
 #define   MSBPRE     0
 #endif
+
 #ifndef   LSBPRE     
+/**
+ * @brief For use with shift_in.  Stands for least significant bit first, pre-clock.
+ */
 #define   LSBPRE     1
 #endif
+
 #ifndef   MSBPOST    
+/**
+ * @brief For use with shift_in.  Stands for most significant bit first, post-clock.
+ */
 #define   MSBPOST    2
 #endif
+
 #ifndef   LSBPOST    
+/**
+ * @brief For use with shift_in.  Stands for least significant bit first, post-clock.
+ */
 #define   LSBPOST    3
 #endif
   
 // Values for use with shift_out
 #ifndef   LSBFIRST   
+/**
+ * @brief For use with shift_out.  Stands for least significant bit first.
+ */
 #define   LSBFIRST   0
 #endif
 
 #ifndef   MSBFIRST   
+/**
+ * @brief For use with shift_out.  Stands for most significant bit first.
+ */
 #define   MSBFIRST   1
 #endif
 
-// Counter module values
+
+
+/**
+ * @}
+ *
+ * @name Counter Module Constants
+ * @{
+ */
+
+
+
 #ifndef NCO_PWM_1
+/**
+ * @brief Building block for configuring a cog's counter module to PWM mode.  
+ * Used by pwm functions.  PWM stands for pulse width modulation.
+ */
 #define NCO_PWM_1 (0b00100 << 26)
 #endif
 
 #ifndef CTR_NCO
+/**
+ * @brief Building block for configuring a cog's counter module to NCO mode.  
+ * Used by square_wave function.  NCO stands for numerically controlled oscillator.
+ */
 #define CTR_NCO (0b100 << 26)
 #endif
 
 #ifndef CTR_PLL
+/**
+ * @brief Building block for configuring a cog's counter module to PLL mode.  
+ * Used by square_wave function.  PLL stands for phase locked loop.
+ */
 #define CTR_PLL (0b10 << 26)
 #endif
 
 #ifndef DUTY_SE
+/**
+ * @brief Building block for configuring a cog's counter module to DUTY_SE mode.  
+ * Used by dac functions.  DUTY_SE stands for duty single ended.
+ */
 #define DUTY_SE (0b110 << 26)
 #endif
 
-// Define types for simplified driver declarations
-//typedef FILE* serial;
-//typedef FILE* fdserial;
-//typedef FILE* sdcard;
-//typedef I2C* i2c;
+
+
+/**
+ * @}
+ *
+ * @name Reverse Compatibility Functions
+ * @{
+ */
+
+
+
+/**
+ * @brief ee_put_byte renamed ee_putByte.
+ */
+#define ee_put_byte ee_putByte
+
+
+/**
+ * @brief ee_get_byte renamed ee_getByte.
+ */
+#define ee_get_byte ee_getByte
+
+
+/**
+ * @brief ee_put_int renamed ee_putInt.
+ */
+#define ee_put_int ee_putInt
+
+
+/**
+ * @brief ee_get_int renamed ee_getInt.
+ */
+#define ee_get_int ee_getInt
+
+
+/**
+ * @brief ee_put_str renamed ee_putStr.
+ */
+#define ee_put_str ee_putStr
+
+
+/**
+ * @brief ee_get_str renamed ee_getStr.
+ */
+#define ee_get_str ee_getStr
+
+
+/**
+ * @brief ee_put_float32 renamed ee_putFloat32.
+ */
+#define ee_put_float32 ee_putFloat32
+
+
+/**
+ * @brief (Deprecated) Use waitcnt(CLKFREQ + CNT) for a delay that lasts 1 second,
+ * and use fractions of CLKFREQ for smaller numbers of system clock ticks.
+ */
+#define pause_ticks(pticks) __builtin_propeller_waitcnt(pticks+CNT, 0)
+
+
+
+/**
+ * @}
+ *
+ * @name Propeller EEPROM Address
+ * @{
+ */
+
+
+
+#ifndef EEPROM_ADDR
+/**
+ * @brief Propeller EEPROM I2C bus  address
+ */
+#define EEPROM_ADDR	 0x50
+#endif
+
+
+
+/**
+ * @}
+ */
+
+
 
 /**
  * @brief Set an I/O pin to output-high
@@ -234,6 +550,7 @@ extern int eeInitFlag;
  */
 void high(int pin);
 
+
 /**
  * @brief Set an I/O pin to output-low
  *
@@ -245,6 +562,33 @@ void high(int pin);
  * @param pin Number of the I/O pin to set low.
  */
 void low(int pin);
+
+
+/**
+ * @brief Set an I/O pin to input and return 1 if pin
+ * detects a high signal, or 0 if it detects low.
+ *
+ * @details This function makes the Propeller
+ * connect the I/O pin to its input buffer
+ * so that it can return the binary value of the
+ * voltage applied by an external circuit.  
+ *
+ * @param pin Number of the I/O pin to set to input.
+ *
+ * @returns 1 to indicate high (above 1.65 V) received 
+ * or 0 to indicate low (below 1.65 V) received.
+ */
+int input(int pin);
+
+
+
+/**
+ *
+ * @name More Individual I/O
+ * @{
+ */
+ 
+ 
 
 /**
  * @brief Toggle the output state of the I/O pin.
@@ -260,21 +604,6 @@ void low(int pin);
 unsigned int toggle(int pin);
 
 /**
- * @brief Set an I/O pin to input
- *
- * @details This function makes the Propeller
- * connect the I/O pin to its input buffer
- * so that it can return the binary value of the
- * voltage applied by an external circuit.
- *
- * @param pin Number of the I/O pin to set to input.
- *
- * @returns 1 or 0 to indicate high or low signal
- * received.
- */
-unsigned int input(int pin);
-
-/**
  * @brief Reverse the direction of an I/O pin.
  *
  * @details If an I/O pin's direction is set to input, this
@@ -286,6 +615,7 @@ unsigned int input(int pin);
  * @returns The new pin direction.
  */
 unsigned int reverse(int pin);
+
 
 /**
  * @brief Check the state of an I/O pin without
@@ -360,6 +690,17 @@ void set_direction(int pin, int direction);
  */
 void set_output(int pin, int state);
 
+
+
+/**
+ * @}
+ *
+ * @name Group I/O
+ * @{
+ */
+
+
+
 /**
  * @brief Get states of a contiguous group of I/O pins
  *
@@ -429,6 +770,19 @@ void set_directions(int endPin, int startPin, unsigned int pattern);
  */
 void set_outputs(int endPin, int startPin, unsigned int pattern);
 
+
+
+
+/**
+ * @}
+ *
+ * @name Timing
+ * @{
+ */
+
+
+
+
 /**
  * @brief Delay cog from moving on to the next statement for a certain length
  * of time.
@@ -442,59 +796,6 @@ void set_outputs(int endPin, int startPin, unsigned int pattern);
 void pause(int time);
 
 /**
- * @brief Delay cog from moving on to the next statement for a certain number
- * of system clock ticks.
- *
- * @details At 80 MHz, each clock tick is 12.5 ns.  Code overhead varies 
- * depending on memory model and optimization.  A simple test if you want a
- * certain number of clock ticks is:
- * 
- *  @code
- *  unsigned int ti, tf, us, pauseTicks;
- *  us = CLKFREQ/1000000;                               // 1 us worth of ticks
- *  pauseTicks = 50*us;                                 // 50 us of ticks
- *  ti = CNT;                                           // Save start time
- *  pause_ticks(pauseTicks);                            // Call pause_ticks
- *  tf = CNT;                                           // Save end time
- *  printf("pauseTicks = %d\n", pauseTicks);            // Display pauseTicks
- *  printf("delayTicks = %d\n", tf - ti);               // Display measured
- *  @endcode
- *
- * @param pticks the number of pause clock ticks.
- */
-#define pause_ticks(pticks) __builtin_propeller_waitcnt(pticks+CNT, 0)
-
-/**
- * @brief Mark the current time.
- *
- * @details The timeout function uses the marked time to determine if a timeout
- * has occurred.
- */
-void mark(void);
-
-/**
- * @brief Compares the time against the time elapsed since mark.
- *
- * @details The default time increment is 1 us, so timeout(2000) will return 1
- * if 2 ms or more has elapsed since mark, or 0 if it has not.
- *
- * @param time Number of time increments.
- */
-int timeout(int time);
-
-/**
- * @brief Waits a certain number of time increments from the last call to
- * mark or wait functions.
- *
- * @details The default time increment is 1 us, so wait(2000) will return wait
- * until 2 us after the last call to mark or wait.  This function automatically 
- * updates the marked time; you can call it repeatedly without having to call mark.
- *
- * @param time Number of time increments.
- */
-void wait(int time);
-
-/**
  * @brief Set time increment for pause function
  *
  * @details Default time increment for pause function is 1 ms.  This function
@@ -505,6 +806,19 @@ void wait(int time);
  * @param clockticks the number of clock ticks that pause(1) will delay.
  */
 void set_pause_dt(int clockticks);
+
+
+
+
+/**
+ * @}
+ *
+ * @name Timed I/O
+ * @{
+ */
+
+
+
 
 /**
  * @brief Count number of low to high transitions an external input applies to
@@ -658,7 +972,7 @@ long pulse_in(int pin, int state);
  * if it transmits a high signal before the call.  When the pulse is done, the pin
  * returns to whatever state it was in before the pulse.  If the pin was an input, it
  * will be changed to output and use whatever value was in the output register bit
- * for the pin.  This defaults to low on startup, but you can pre-set it while leaving
+ * for the pin.  This defaults to low on start-up, but you can pre-set it while leaving
  * the pin set to input with the set_output function (or check it with get_output).
  *
  * @param pin I/O pin number.
@@ -731,9 +1045,21 @@ void set_io_timeout(long clockTicks);
  * units is specified with set_io_dt(CLKFREQ/1000000).  For 2 microsecond units, use
  * set_io_dt(CLKFREQ/500000).
  *
- * @param clockticks Number of clocktics that represents one I/O time increment.
+ * @param clockticks Number of clock ticks that represents one I/O time increment.
  */
 void set_io_dt(long clockticks);
+
+
+
+
+/**
+ * @}
+ *
+ * @name SPI
+ * @{
+ */
+
+
 
 
 /**
@@ -754,30 +1080,44 @@ int shift_in(int pinDat, int pinClk, int mode, int bits);
 *
 * @param pinDat Data pin
 * @param pinClk Clock pin
-* @param mode Order that bits are transmitteed, either LSBFIRST or MSBFIRST.
+* @param mode Order that bits are transmitted, either LSBFIRST or MSBFIRST.
 * @param bits Number of binary values to transfer.
 * @param value to transmit.
 */
 void shift_out(int pinDat, int pinClk, int mode, int bits, int value);
 
+
+
+
+/**
+ * @}
+ *
+ * @name I2C
+ * @{
+ */
+
+
+
+
 /**
  * @brief Set up a simple serial driver with transmit & receive pins.
  *
- * @param sclpin the I2C bus' serial clock pin.
+ * @param sclPin the I2C bus' serial clock pin.
  *
- * @param sdapin the I2C bus' serial data pin.
+ * @param sdaPin the I2C bus' serial data pin.
  *
- * @param scldrive sets I/O pin connected to SCL line to send high signals by 
- * either (sclDrive = 0) allowing the pullup resistor on the bus to pull the 
+ * @param sclDrive sets I/O pin connected to SCL line to send high signals by 
+ * either (sclDrive = 0) allowing the pull-up resistor on the bus to pull the 
  * line high, or (sclDrive = 1) by setting the I/O pin to output and driving the
  * line high.  sclDrive = 0 is by far the most common arrangement.  sclDrive = 1 
  * is used with some Propeller boards that do not have a pull-up resistor on the 
  * EEPROM's SCL line.    
  *
- * @returns a pointer to the I2C bus.  You will need this to pass to the i2cWrite and
- * i2cRead functions for communication on the bus. 
+ * @returns busID - a pointer to the I2C bus info in memory.  The busID value gets
+ * passed to i2c_out, i2c_in, and i2c_busy's busID parameter to select which I2C 
+ * bus to use. 
  */
-i2c *i2c_newbus(int sclpin, int sdapin, int scldrive);
+i2c *i2c_newbus(int sclPin, int sdaPin, int sclDrive);
 
 
 /**
@@ -786,30 +1126,30 @@ i2c *i2c_newbus(int sclpin, int sdapin, int scldrive);
  * @details This function uses Simple Libraries/Protocol/libsimplei2c for
  * clock and data line signaling.  You can also use this library to create
  * custom I2C functions.  Other I2C signaling options are included in
- * Propeller GCC.  Search for i2C int he propgcc folder for more info.  
+ * Propeller GCC.  Search for i2C in the propgcc folder for more info.  
  *
- * @param *bus pointer to an I2C bus.  Use i2c_newbus to get a pointer to an
- * I2C bus structure.
+ * @param *busID I2C bus identifier.  i2c_newbus returns this pointer.
  *
- * @param i2cAddr 8 bit device address.  This is the 7-bit I2C address and 
- * read/write bit.  The value of the read/write bit does not matter because
- * the i2c_out and i2c_in functions clear and set it as needed.
+ * @param i2cAddr 7 bit I2C device address.   
  *
- * @param *regAddr Pointer to variable or array that contains the number of 
- * bytes to write to the device's register(s) or a memory address.
+ * @param memAddr Value for setting memory address pointer inside the I2C
+ * device.
  *
- * @param regSize Number of bytes to use for regAddr.  This value can be zero
- * for no register or memory address data.
+ * @param memAddrCount Number of bytes to use for memAddr.  This value can 
+ * be zero for no register or memory address data, in which case memAddr
+ * can be set to NULL.
  *
- * @param *data Pointer to variable or array to send to the I2C device.
+ * @param *data Pointer to bytes to send to the I2C device.
  *
- * @param count number of bytes in data
+ * @param dataCount Number of bytes in data to send.  Use a positive value to transmit
+ * least significant byte first, or a negative value to transmit most significant 
+ * byte first.
  *
- * @returns total number of bytes written. Should be 1 + regSize + count.  
+ * @returns total number of bytes written. Should be 1 + memAddrCount + dataCount.  
  */
-HUBTEXT int  i2c_out(i2c *bus, int i2cAddr, 
-                     const unsigned char *regAddr, int regSize, 
-                     const unsigned char *data, int count);
+HUBTEXT int  i2c_out(i2c *busID, int i2cAddr, 
+                     int memAddr, int memAddrCount, 
+                     const unsigned char *data, int dataCount);
 
 
 /**
@@ -818,31 +1158,54 @@ HUBTEXT int  i2c_out(i2c *bus, int i2cAddr,
  * @details This function uses Simple Libraries/Protocol/libsimplei2c for
  * clock and data line signaling.  You can also use this library to create
  * custom I2C functions.  Other I2C signaling options are included in
- * Propeller GCC.  Search for i2C int he propgcc folder for more info.  
+ * Propeller GCC.  Search for i2C in the propgcc folder for more info.  
  *
- * @param *bus pointer to an I2C bus.  Use i2c_newbus to get a pointer to an
- * I2C bus structure.
+ * @param *busID I2C bus identifier.  i2c_newbus returns this pointer.
  *
- * @param i2cAddr 8 bit device address.  This is the 7-bit I2C address and 
- * read/write bit.  The value of the read/write bit does not matter because
- * the i2c_out and i2c_in functions clear and set it as needed.
+ * @param i2cAddr 7 bit I2C device address.   
  *
- * @param regAddr Pointer to variable or array that contains the number of 
- * bytes to write to the device's register(s) or a memory address.
+ * @param memAddr Value for setting memory address pointer inside the I2C
+ * device.
  *
- * @param regSize Number of bytes to use for regAddr.  This value can be zero
- * for no register or memory address data.
+ * @param memAddrCount Number of bytes to use for memAddr.  This value can 
+ * be zero for no register or memory address data, in which case memAddr
+ * can be set to NULL.
  *
- * @param *data Pointer to variable or array that will receive data from 
- * I2C device.
+ * @param *data Pointer to bytes set aside for receiving data from the I2C device.
  *
- * @param count number of bytes in data
+ * @param dataCount Number of bytes in data to send.  Use a positive value to load data
+ * into result variable(s) least significant byte first, or a negative value for most 
+ * significant byte first.
  *
- * @returns total number of bytes written. Should be 1 + regSize + count.  
+ * @returns total number of bytes written. Should be 1 + memAddrCount + dataCount.  
  */
-HUBTEXT int  i2c_in(i2c *bus, int i2cAddr, 
-                     const unsigned char *regAddr, int regSize, 
-                     unsigned char *data, int count);
+HUBTEXT int  i2c_in(i2c *busID, int i2cAddr, 
+                    int memAddr, int memAddrCount, 
+                    unsigned char *data, int dataCount);
+
+
+/**
+ * @brief Check if I2C device is busy or responding.
+ *
+ * @param *busID I2C bus identifier.  i2c_newbus returns this pointer.
+ *
+ * @param i2cAddr 7 bit I2C device address.   
+ *
+ * @returns 1 if busy, 0 if ready.  
+ */
+HUBTEXT int i2c_busy(i2c *busID, int i2cAddr);
+
+
+
+
+/**
+ * @}
+ *
+ * @name Propeller EEPROM
+ * @{
+ */
+
+
 
 
 /**
@@ -852,14 +1215,9 @@ HUBTEXT int  i2c_in(i2c *bus, int i2cAddr,
  * @param value The byte value to store in EEPROM.
  *
  * @param addr The EEPROM address where the value is to be stored.
+ * 
  */
-void ee_putByte(char value, int addr);
-
-/**
- * @brief ee_put_byte renamed ee_putByte.
- */
-#define ee_put_byte ee_putByte
-
+void ee_putByte(unsigned char value, int addr);
 
 /**
  * @brief Get a byte value from a certain address in the Propeller Chip's
@@ -871,11 +1229,6 @@ void ee_putByte(char value, int addr);
  * by the addr parameter.
  */
 char ee_getByte(int addr);
-
-/**
- * @brief ee_get_byte renamed ee_getByte.
- */
-#define ee_get_byte ee_getByte
 
 
 /**
@@ -890,12 +1243,6 @@ char ee_getByte(int addr);
 void ee_putInt(int value, int addr);
 
 /**
- * @brief ee_put_int renamed ee_putInt.
- */
-#define ee_put_int ee_putInt
-
-
-/**
  * @brief Get an int value from a certain address in the Propeller Chip's
  * dedicated EEPROM.  If you are fetching several int values, make sure to 
  * add 4 to the addr value with each successive call.
@@ -905,12 +1252,6 @@ void ee_putInt(int value, int addr);
  * @returns value The int value stored by the EEPROM at the specified address.
  */
 int ee_getInt(int addr);
-
-/**
- * @brief ee_get_int renamed ee_getInt.
- */
-#define ee_get_int ee_getInt
-
 
 /**
  * @brief Store a string of byte values starting at a certain address in 
@@ -923,12 +1264,6 @@ int ee_getInt(int addr);
  * @param addr The EEPROM address of the first byte in the string.
  */
 void ee_putStr(unsigned char *s, int n, int addr);
-
-/**
- * @brief ee_put_str renamed ee_putStr.
- */
-#define ee_put_str ee_putStr
-
 
 /**
  * @brief Fetch a string of byte values starting at a certain address in 
@@ -944,13 +1279,7 @@ void ee_putStr(unsigned char *s, int n, int addr);
  * @returns The address of the array that stores the characters that
  * were fetched.
  */
-char* ee_getStr(unsigned char* s, int n, int addr);
-
-/**
- * @brief ee_get_str renamed ee_getStr.
- */
-#define ee_get_str ee_getStr
-
+unsigned char* ee_getStr(unsigned char* s, int n, int addr);
 
 /**
  * @brief Store a 32-bit precision floating point value at a certain address
@@ -958,7 +1287,7 @@ char* ee_getStr(unsigned char* s, int n, int addr);
  * so if you are storing values in a sequence, make sure to add 4 to each addr
  * parameter value.
  *
- * Make sure that the Math box is checked in the Project Manger.  In Simple View,
+ * Make sure that the Math box is checked in the Project Manager.  In Simple View,
  * click the Show Project Manager button in SimpleIDE's bottom-left corner.  Then
  * click the Linker tab, and check the Math Lib box.
  *
@@ -969,18 +1298,12 @@ char* ee_getStr(unsigned char* s, int n, int addr);
 void ee_putFloat32(float value, int addr);
 
 /**
- * @brief ee_put_float32 renamed ee_putFloat32.
- */
-#define ee_put_float32 ee_putFloat32
-
-
-/**
  * @brief Fetch a 32-bit precision floating point value from a certain address
  * in the Propeller Chip's dedicated EEPROM.  A 32-bit value occupies four bytes
  * so if you are fetching values in a sequence, make sure to add 4 to each addr
  * parameter value.
  *
- * Make sure that the Math box is checked in the Project Manger.  In Simple View,
+ * Make sure that the Math box is checked in the Project Manager.  In Simple View,
  * click the Show Project Manager button in SimpleIDE's bottom-left corner.  Then
  * click the Linker tab, and check the Math Lib box.
  *
@@ -991,8 +1314,20 @@ void ee_putFloat32(float value, int addr);
  */
 float ee_getFloat32(int addr);
 
+
+
 /**
- * @brief Mount an SD card with the minimal 4-pin interface.
+ * @}
+ *
+ * @name SD Card
+ * @{
+ */
+
+
+
+/**
+ * @brief Mount an SD card with the minimal 4-pin interface.  For <a href="http://learn.parallax.com" target="_blank">Parallax Learn Site</a>
+ * examples, see: <a href="http://learn.parallax.com/propeller-c-simple-devices/sd-card-data" target="_blank">SD Card Data</a> and <a href="http://learn.parallax.com/propeller-c-simple-devices/play-wav-files" target="_blank">Play WAV Files</a>.
  *
  * @param doPin The SD card's data out pin.
  *
@@ -1006,51 +1341,179 @@ float ee_getFloat32(int addr);
  */
 int sd_mount(int doPin, int clkPin, int diPin, int csPin);
 
-/**
- * @brief Convert value to zero terminated text string.
- *
- * @details Given an int, a character array pointer and a base, this function
- *          converts the int into the characters that represent the value in
- *          the specified base.
- *
- * @param   i An integer value.
- * @param   b[] A character array pointer.
- * @param   base The number base for the character representation.
- *
- * @returns The character array address it received.
- */
-char* itoa(int i, char b[], int base);
 
 
 /**
- * @brief Restarts floating point coprocessor (which runs in a separate
- * cog) after it has been shut down by stop_fpu_cog.  This process is 
- * started automatically when an application that uses the simpletools
- * library is launched.  So the only time you would call it is after
- * calling stop_fpu_cog in order to reclaim a cog for other uses.  
- * CAUTION: Do not try call simpletext library functions while the
- * fpu cog is shut down, it could cause the application to hang.
+ * @}
  *
- * @returns Nonzero if successful, or zero if no cogs available.
+ * @name Multicore
+ * @{
  */
-int start_fpu_cog(void);
+
+
+
 
 
 /**
- * @brief Stop floating point coprocessing cog that is started
- * automatically when an application that uses the simpletools library 
- * is launched.  When this function stops the cog running the floating 
- * point coprocessor, it will save a cog, but disable certain floating 
- * point functionalities until it is restarted by calling start_fpu_cog.
- * CAUTION: Do not try call simpletext library functions while the
- * fpu cog is shut down, it could cause the application to hang.
+ * @brief Run a function's code in the next available cog (processor).
  *
- * @returns Nonzero if successful, or zero if no cogs available.
+ * @details cog_run is designed to make launching application level
+ * functions (typically from the main file) quick and easy. All you have
+ * to do is pass a pointer to a function with no return value or parameters
+ * along with the number for extra memory to reserve. The value returned 
+ * can be used to shut down the process and free up memory and a cog later
+ * by passing it to cog_end. 
+ *
+ * @param *function pointer to a function with no parameters 
+ * or return value. Example, if your function is void myFunction(), then
+ * pass &myFunction. 
+ *
+ * @param stacksize Number of extra int variables for local variable declarations
+ * and call/return stack. This also needs to cover any local variable declarations
+ * in functions that your function calls, including library functions. Be liberal 
+ * with extra stack space for prototyping, and if in doubt, 40 to whatever value 
+ * you calculate.
+ *
+ * @returns *coginfo Address of memory set aside for the cog. Make sure to save this value
+ * in a variable if you intend to stop the process later with cog_end or check which cog
+ * the process was launched into with cog_num.
  */
-void stop_fpu_cog(void);
+int *cog_run(void (*function)(void *par), int stacksize);
 
 
-int add_driver(_Driver *driverAddr);
+/**
+ * @brief Get the cog ID.
+ *
+ * @param *coginfo the address returned by cog_run.
+ *
+ * @returns The cog ID number.
+ */
+int cog_num(int *coginfo);
+
+
+/**
+ * @brief End function code running in another cog that was launched with cog_run.
+ *
+ * @details This function uses the value returned by cog_run to stop a function
+ * running in another cog and free the stack space cog_run allocated with its
+ * stacksize parameter.
+ *
+ * @param *coginfo the address returned by cog_run.
+ */
+void cog_end(int *coginfo);
+
+
+
+/**
+ * @}
+ *
+ * @name Miscellaneous
+ * @{
+ */
+
+
+
+/**
+ * @brief Take bytes in one variable at varAddr, swap their order, and store them 
+ * in another variable at resultAddr.  This is useful for communication with peripherals
+ * that transmit/receive bytes in multi-byte values in reverse order from how the 
+ * Propeller stores it in RAM.  
+ *
+ * @param *resultAddr Address of variable to store result.  Make sure it's the
+ * same type as the varAddr parameter.
+ *
+ * @param *varAddr Address of source variable.  Accepts any variable type.
+ *
+ * @param *byteCount Number of bytes in the variable.
+ */
+void endianSwap(void *resultAddr, void *varAddr, int byteCount);
+
+
+
+/**
+ * @}
+ *
+ * @name Deprecated
+ * @{
+ */
+
+
+
+/**
+ * @brief Mark the current time (deprecated).
+ *
+ * @details The timeout function uses the marked time to determine if a timeout
+ * has occurred.  
+ * 
+ * @note This function has been deprecated because it doesn't support use in 
+ * more than one cog.  Use this code instead:
+ * 
+ * @code
+ * // CNT stores current number of system clock ticks elapsed.
+ * int t = CNT;           // Mark current time by storing in variable
+ * @endcode
+ */
+void mark(void);
+
+/**
+ * @brief Compares the time against the time elapsed since mark (deprecated).
+ *
+ * @details The default time increment is 1 us, so timeout(2000) will return 1
+ * if 2 ms or more has elapsed since mark, or 0 if it has not.
+ * 
+ * @note This function has been deprecated because it doesn't support use in 
+ * more than one cog.  Use this code instead:
+ * 
+ * @code
+ * // CLKFREQ stores number of system clock ticks in 1 second.
+ * // CNT stores current number of system clock ticks elapsed.
+ * int dt = CLKFREQ/2;    // Pick a timeout, 1/2 a second in this case
+ * int t = CNT;           // Mark current time by storing in variable
+ * while(CNT - t < dt)    // Repeat until timeout
+ * {
+ *   // Add code repeated until time elapsed is larger than dt here.
+ * }
+ * @endcode
+ *
+ * @param time Number of time increments.
+ */
+int timeout(int time);
+
+/**
+ * @brief Waits a certain number of time increments from the last call to
+ * mark or wait functions (deprecated).
+ *
+ * @details The default time increment is 1 us, so wait(2000) will return wait
+ * until 2 us after the last call to mark or wait.  This function automatically 
+ * updates the marked time; you can call it repeatedly without having to call mark.
+ * 
+ * @note This function has been deprecated because it doesn't support use in 
+ * more than one cog.  Use this code instead:
+ * 
+ * @code
+ * // CLKFREQ stores number of system clock ticks in 1 second.
+ * // CNT stores current number of system clock ticks elapsed.
+ * int t = CNT;           // Mark current time by storing in variable
+ * int dt = CLKFREQ/10;   // Pick time increment, 1/10 second in this case
+ * while(1)               // Repeat indefinitely
+ * {
+ *   // Variable timed code here.  Must last less than dt.
+ *   waitcnt(t += dt);
+ *   // Code that must start at precise intervals here.
+ * }
+ * @endcode
+ *
+ * @param time Number of time increments.
+ */
+void wait(int time);
+
+
+
+/**
+ * @}
+ */
+ 
+ 
 
 #if defined(__cplusplus)
 }
@@ -1080,7 +1543,3 @@ int add_driver(_Driver *driverAddr);
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-
-
-
-
