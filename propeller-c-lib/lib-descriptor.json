@@ -49,5 +49,15 @@
         "memorymodel": {
             "cmm": "TextDevices/libfdserial/cmm/"
         }
+    },
+    {
+        "name": "ping",
+        "libdir": "Sensor/libping",
+        "include": [
+            "ping"
+        ],
+        "memorymodel": {
+            "cmm": "Sensor/libping/cmm/"
+        }
     }
 ]

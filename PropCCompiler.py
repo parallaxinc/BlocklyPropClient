@@ -35,10 +35,11 @@ class PropCCompiler:
         result = {}
 
         compile_success, binary_file, compile_output, compile_err = self.compile(action, code)
-        if compile_output == '':
+        print(compile_err)
+        if compile_err is None:
             out = "Compile successful\n"
         else:
-            out = compile_output
+            out = compile_err
         success = compile_success
 
         result["compile-success"] = compile_success
