@@ -43,7 +43,8 @@
         "name": "fdserial",
         "libdir": "TextDevices/libfdserial",
         "include": [
-            "abdrive"
+            "abdrive",
+            "fdserial"
         ],
         "memorymodel": {
             "cmm": "TextDevices/libfdserial/cmm/"
