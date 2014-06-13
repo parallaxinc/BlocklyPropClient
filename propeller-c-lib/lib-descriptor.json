@@ -59,5 +59,15 @@
         "memorymodel": {
             "cmm": "Sensor/libping/cmm/"
         }
+    },
+    {
+        "name": "abvolts",
+        "libdir": "Convert/libabvolts",
+        "include": [
+            "abvolts"
+        ],
+        "memorymodel": {
+            "cmm": "Convert/libabvolts/cmm/"
+        }
     }
 ]
