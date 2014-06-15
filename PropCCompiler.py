@@ -120,8 +120,11 @@ class PropCCompiler:
         executing_data.append(binary_file.name)
         executing_data.append(c_file.name)
         executing_data.append("-lm")
-        for descriptor in descriptors:
-            executing_data.append("-l" + descriptor["name"])
+        while len(descriptors) > 0:
+            for descriptor in descriptors:
+                executing_data.append("-l" + descriptor["name"])
+            executing_data.append("-lm")
+            del descriptors[-1]
 
         return executing_data
 
