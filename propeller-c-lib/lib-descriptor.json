@@ -3,7 +3,8 @@
         "name": "simpletools",
         "libdir": "Utility/libsimpletools",
         "include": [
-            "simpletools"
+            "simpletools",
+            "servo"
         ],
         "memorymodel": {
             "cmm": "Utility/libsimpletools/cmm/"
@@ -68,6 +69,16 @@
         ],
         "memorymodel": {
             "cmm": "Convert/libabvolts/cmm/"
+        }
+    },
+    {
+        "name": "servo",
+        "libdir": "Motor/libservo",
+        "include": [
+            "servo"
+        ],
+        "memorymodel": {
+            "cmm": "Motor/libservo/cmm/"
         }
     }
 ]
