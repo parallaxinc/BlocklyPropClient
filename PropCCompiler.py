@@ -44,7 +44,7 @@ class PropCCompiler:
 
         result["compile-success"] = compile_success
 
-        if self.compile_actions[action]["call-loader"]:
+        if self.compile_actions[action]["call-loader"] and success:
             load_success, load_output, load_err = self.propeller_loader.load(action, binary_file, com_port)
             out += "\n" + load_output
             success = success and load_success
@@ -66,10 +66,10 @@ class PropCCompiler:
         c_file.close()
         binary_file.close()
 
-        includes = self.parse_includes(c_file) # parse includes
-        descriptors = self.get_includes(includes) # get lib descriptors for includes
-        executing_data = self.create_executing_data(c_file, binary_file, descriptors) # build execution command
-        process = subprocess.Popen(executing_data, stdout=subprocess.PIPE) # call compile
+        includes = self.parse_includes(c_file)  # parse includes
+        descriptors = self.get_includes(includes)  # get lib descriptors for includes
+        executing_data = self.create_executing_data(c_file, binary_file, descriptors)  # build execution command
+        process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # call compile
         out, err = process.communicate()
 
         if process.returncode == 0:
