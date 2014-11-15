@@ -11,7 +11,8 @@ class PropellerLoad:
         self.propeller_load_executables = {
             "Windows": "/propeller-tools/windows/propeller-load.exe",
             "Linux": "/propeller-tools/linux/propeller-load",
-            "MacOS": "/propeller-tools/mac/propeller-load"
+            "MacOS": "/propeller-tools/mac/propeller-load",
+            "Darwin": "/propeller-tools/mac/propeller-load"
         }
 
         self.load_actions = {
@@ -19,7 +20,7 @@ class PropellerLoad:
             "EEPROM": {"compile-options": ["-e"]}
         }
 
-        if not self.propeller_load_executables[platform.system()]:
+        if not platform.system() in self.propeller_load_executables:
             #showerror("Unsupported", platform.system() + " is currently unsupported")
             print("Unsupported", platform.system() + " is currently unsupported")
             exit(1)

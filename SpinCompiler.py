@@ -13,7 +13,8 @@ class SpinCompiler:
         self.compiler_executables = {
             "Windows": "/propeller-tools/windows/openspin.exe",
             "Linux": "/propeller-tools/linux/openspin",
-            "MacOS": "/propeller-tools/mac/openspin"
+            "MacOS": "/propeller-tools/mac/openspin",
+            "Darwin": "/propeller-tools/mac/openspin"
         }
 
         self.compile_actions = {
@@ -22,7 +23,7 @@ class SpinCompiler:
             "EEPROM": {"compile-options": ["-e"], "extension":".eeprom", "call-loader": True}
         }
 
-        if not self.compiler_executables[platform.system()]:
+        if not platform.system() in self.compiler_executables:
             #showerror("Unsupported", platform.system() + " is currently unsupported")
             print("Unsupported", platform.system() + " is currently unsupported")
             exit(1)
@@ -58,7 +59,7 @@ class SpinCompiler:
         binary_file.close()
 
         executable = self.appdir + self.compiler_executables[platform.system()]
-	print executable
+        print(executable)
         lib_directory = self.appdir + "/propeller-lib"
 
         executing_data = [executable, "-o", binary_file.name, "-L", lib_directory]

@@ -15,7 +15,8 @@ class PropCCompiler:
         self.compiler_executables = {
             "Windows": "propeller-elf-gcc",
             "Linux": "propeller-elf-gcc",
-            "MacOS": "propeller-elf-gcc"
+            "MacOS": "propeller-elf-gcc",
+            "Darwin": "propeller-elf-gcc"
         }
 
         self.compile_actions = {
@@ -24,7 +25,7 @@ class PropCCompiler:
             "EEPROM": {"compile-options": [], "extension":".elf", "call-loader": True}
         }
 
-        if not self.compiler_executables[platform.system()]:
+        if not platform.system() in self.compiler_executables:
             #showerror("Unsupported", platform.system() + " is currently unsupported")
             print("Unsupported", platform.system() + " is currently unsupported")
             exit(1)
