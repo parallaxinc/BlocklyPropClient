@@ -28,7 +28,10 @@ class PropellerLoad:
         self.appdir = os.getcwd()
 
     def get_ports(self):
-        process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE)
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+        process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, startupinfo=startupinfo)
         out, err = process.communicate()
 #        return json.dumps(out.splitlines())
         return out.splitlines()
@@ -42,7 +45,11 @@ class PropellerLoad:
             executing_data.append("-p")
             executing_data.append(com_port)
         executing_data.append(file_to_load.name)
-        process = subprocess.Popen(executing_data, stdout=subprocess.PIPE)
+
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+        process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, startupinfo=startupinfo)
         out, err = process.communicate()
 
         if process.returncode == 0:

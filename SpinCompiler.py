@@ -65,7 +65,11 @@ class SpinCompiler:
         executing_data = [executable, "-o", binary_file.name, "-L", lib_directory]
         executing_data.extend(self.compile_actions[action]["compile-options"])
         executing_data.append(spin_file.name)
-        process = subprocess.Popen(executing_data, stdout=subprocess.PIPE)
+
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+        process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, startupinfo=startupinfo)
         out, err = process.communicate()
 
         if process.returncode == 0:

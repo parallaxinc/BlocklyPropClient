@@ -70,7 +70,11 @@ class PropCCompiler:
         includes = self.parse_includes(c_file)  # parse includes
         descriptors = self.get_includes(includes)  # get lib descriptors for includes
         executing_data = self.create_executing_data(c_file, binary_file, descriptors)  # build execution command
-        process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # call compile
+
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
+        process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)  # call compile
         out, err = process.communicate()
 
         if process.returncode == 0:
