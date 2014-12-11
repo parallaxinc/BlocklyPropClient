@@ -1,5 +1,5 @@
 # -*- mode: python -*-
-a = Analysis(['BlocklyServer.py'],
+a = Analysis(['BlocklyPropClient.py'],
 
              hiddenimports=[],
              hookspath=None,
@@ -12,11 +12,12 @@ exe = EXE(pyz,
           debug=False,
           strip=None,
           upx=True,
-          console=True,
+          console=False,
           icon='blocklyprop.ico' )
 propeller_libs_and_tools = Tree('propeller-tools', prefix='propeller-tools', excludes=['*.pdf', 'linux', 'mac'])
 propeller_libs_and_tools += Tree('propeller-lib', prefix='propeller-lib')
 propeller_libs_and_tools += Tree('propeller-c-lib', prefix='propeller-c-lib', excludes=['*.html', 'html', '*.doxyfile', '*.side', '*.c'])
+propeller_libs_and_tools += [('blocklyprop.ico', 'blocklyprop.ico', 'Windows icon')]
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
