@@ -20,7 +20,7 @@ You will first have to install some python dependencies before you can run Block
 
 These can all be installed using pip
 
-Then do: python BlocklyServer.py
+Then do: python BlocklyPropClient.py
 
 Building
 -----------------

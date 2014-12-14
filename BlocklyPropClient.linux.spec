@@ -1,5 +1,5 @@
 # -*- mode: python -*-
-a = Analysis(['BlocklyServer.py'],
+a = Analysis(['BlocklyPropClient.py'],
 
              hiddenimports=[],
              hookspath=None,
