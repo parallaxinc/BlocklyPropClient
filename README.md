@@ -18,7 +18,7 @@ You will first have to install some python dependencies before you can run Block
 * pyserial
 * cherrypy
 
-These can all be installed using pip
+These can all be installed using the auto-installer by running the following in the terminal: 'python InstallDependencies.py'
 
 Then do: python BlocklyPropClient.py
 
