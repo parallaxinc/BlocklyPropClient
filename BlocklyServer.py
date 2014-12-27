@@ -51,19 +51,19 @@ class BlocklyServer(object):
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
 
         result = self.compiler[language].handle(action, code, comport)
-        self.queue.put((1, 'INFO', 'Application compiled'+ ' (' + action + ' : ' + language + ')'))
+        self.queue.put((10, 'INFO', 'Application compiled'+ ' (' + action + ' : ' + language + ')'))
         return result
 
     @cherrypy.expose(alias='serial.connect')
     def serial_socket(self):
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
-        self.queue.put((1, 'INFO', 'Serial socket set up'))
+        self.queue.put((10, 'INFO', 'Serial socket set up'))
         handler = cherrypy.request.ws_handler
 
     propellerLoad = PropellerLoad()
 
     compiler = {
-        "spin" : SpinCompiler(propellerLoad),
+        "spin": SpinCompiler(propellerLoad),
         "prop-c": PropCCompiler(propellerLoad)
     }
 
