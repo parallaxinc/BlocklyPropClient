@@ -41,6 +41,7 @@ class BlocklyPropClient(tk.Tk):
             pass
 
         self.initialize()
+        self.initialize_menu()
 
     def set_version(self, version):
         self.version = version
@@ -96,6 +97,22 @@ class BlocklyPropClient(tk.Tk):
         monitor = threading.Thread(target=self.text_catcher)
         monitor.daemon = True
         monitor.start()
+
+    def initialize_menu(self):
+        menubar = tk.Menu(self)
+
+        menubar.add_command(label="Quit", command=self.handle_close)
+
+        options_menu = tk.Menu(menubar, tearoff=0)
+        options_menu.add_command(label="Library location")
+        menubar.add_cascade(label="Options", menu=options_menu)
+
+        help_menu = tk.Menu(menubar, tearoff=0)
+        help_menu.add_command(label="Help")
+        help_menu.add_command(label="About")
+        menubar.add_cascade(label="Help", menu=help_menu)
+
+        self.config(menu=menubar)
 
     def handle_connect(self):
         if self.connected:
