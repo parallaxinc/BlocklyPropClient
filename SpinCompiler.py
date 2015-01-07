@@ -66,10 +66,13 @@ class SpinCompiler:
         executing_data.extend(self.compile_actions[action]["compile-options"])
         executing_data.append(spin_file.name)
 
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        if platform.system() == "Windows":
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-        process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, startupinfo=startupinfo)
+            process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, startupinfo=startupinfo)
+        else:
+            process = subprocess.Popen(executing_data, stdout=subprocess.PIPE)
         out, err = process.communicate()
 
         if process.returncode == 0:

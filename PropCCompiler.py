@@ -71,10 +71,13 @@ class PropCCompiler:
         descriptors = self.get_includes(includes)  # get lib descriptors for includes
         executing_data = self.create_executing_data(c_file, binary_file, descriptors)  # build execution command
 
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        if platform.system() == "Windows":
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-        process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)  # call compile
+            process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)  # call compile
+        else:
+            process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE)  # call compile
         out, err = process.communicate()
 
         if process.returncode == 0:
