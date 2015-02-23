@@ -28,10 +28,14 @@ class PropellerLoad:
         self.appdir = os.getcwd()
 
     def get_ports(self):
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        if platform.system() == "Windows":
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-        process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, startupinfo=startupinfo)
+            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, startupinfo=startupinfo)
+        else:
+            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE)
+
         out, err = process.communicate()
 #        return json.dumps(out.splitlines())
         return out.splitlines()
@@ -46,10 +50,14 @@ class PropellerLoad:
             executing_data.append(com_port)
         executing_data.append(file_to_load.name)
 
-        startupinfo = subprocess.STARTUPINFO()
-        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        if platform.system() == "Windows":
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-        process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, startupinfo=startupinfo)
+            process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, startupinfo=startupinfo)
+        else:
+            process = subprocess.Popen(executing_data, stdout=subprocess.PIPE)
+
         out, err = process.communicate()
 
         if process.returncode == 0:

@@ -23,11 +23,13 @@ class BlocklyPropClient(tk.Tk):
         # initialize values
         self.version = 0.0
         self.connected = False
-        self.lowlevel_logging = 0
 
         # initialize config variables
         self.ip_address = tk.StringVar()
         self.port = tk.StringVar()
+        self.trace_log = tk.IntVar()
+
+        self.trace_log.set(1)
 
         self.title("BlocklyProp")
 
@@ -66,9 +68,15 @@ class BlocklyPropClient(tk.Tk):
 
         self.ent_log = ScrolledText.ScrolledText(self, state='disabled')
         self.ent_log.grid(column=0, row=4, columnspan=2, sticky='nesw', padx=3, pady=3)
+
+        #s = ttk.Style()
+        #s.configure('Right.TCheckbutton', anchor='e')
+        #self.check_log_trace = ttk.Checkbutton(self, style='Right.TCheckbutton', text='Trace logging', variable=self.trace_log)
+        self.check_log_trace = tk.Checkbutton(self, anchor=tk.E, text='Trace logging', variable=self.trace_log, offvalue=1, onvalue=0)
+        self.check_log_trace.grid(column=1, row=3, sticky='nesw', padx=3, pady=3)
         
-        self.btn_log_checkbox = ttk.Button(self, text='Low level logging: Currently False', command=self.handle_lowlevel_logging)
-        self.btn_log_checkbox.grid(column=1, row=3, sticky='nesw', padx=3, pady=3)
+        #self.btn_log_checkbox = ttk.Button(self, text='Low level logging: Currently False', command=self.handle_lowlevel_logging)
+        #self.btn_log_checkbox.grid(column=1, row=3, sticky='nesw', padx=3, pady=3)
 
         self.grid_columnconfigure(0, minsize=100)
         self.grid_columnconfigure(0, weight=1)
@@ -115,26 +123,12 @@ class BlocklyPropClient(tk.Tk):
     def text_catcher(self):
         while 1:
             (level, level_name, message) = self.q.get()
-            if level > 5:
-                # tk.END
+            min_level = self.trace_log.get() * 5
+            if level > min_level:
                 self.ent_log['state'] = 'normal'
                 self.ent_log.insert(tk.END, datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' ' + level_name + ': ' + message + '\n')
                 self.ent_log.yview_pickplace("end")
                 self.ent_log['state'] = 'disabled'
-            if level < 5:
-                if self.lowlevel_logging:
-                    self.ent_log['state'] = 'normal'
-                    self.ent_log.insert(tk.END, datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' ' + level_name + ': ' + message + '\n')
-                    self.ent_log.yview_pickplace("end")
-                    self.ent_log['state'] = 'disabled'
-
-    def handle_lowlevel_logging(self):
-        if self.lowlevel_logging:
-            self.lowlevel_logging = 0
-            self.btn_log_checkbox['text'] = "Low level logging: Currently False"
-        else:
-            self.lowlevel_logging = 1
-            self.btn_log_checkbox['text'] = "Low level logging: Currently True"
 
 
 if __name__ == '__main__':
