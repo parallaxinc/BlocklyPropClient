@@ -7,6 +7,7 @@ import ScrolledText
 import multiprocessing
 from datetime import datetime
 import threading
+import webbrowser
 import os
 import ip
 import BlocklyServer
@@ -111,6 +112,8 @@ class BlocklyPropClient(tk.Tk):
 
             self.connected = True
             self.btn_connect['text'] = "Disconnect"
+            
+            webbrowser.open_new( 'http://blocklyprop.creatingfuture.eu' )
 
     def handle_close(self):
         if tkMessageBox.askokcancel("Quit?", "Are you sure you want to quit?"):
