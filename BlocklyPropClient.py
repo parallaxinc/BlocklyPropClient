@@ -57,6 +57,9 @@ class BlocklyPropClient(tk.Tk):
 
         self.lbl_port = ttk.Label(self, anchor=tk.E, text='Port :')
         self.lbl_port.grid(column=0, row=1, sticky='nesw')
+        
+        self.btn_open_browser = ttk.Button(self, text='Open Browser', command=self.handle_browser)
+        self.btn_open_browser.grid(column=0, row=2, sticky='nesw', padx=3, pady=3)
 
         self.ent_port = ttk.Entry(self, textvariable=self.port)
         self.ent_port.grid(column=1, row=1, sticky='nesw', padx=3, pady=3)
@@ -112,8 +115,9 @@ class BlocklyPropClient(tk.Tk):
 
             self.connected = True
             self.btn_connect['text'] = "Disconnect"
-            
-            webbrowser.open_new( 'http://blocklyprop.creatingfuture.eu' )
+
+    def handle_browser(self):
+        webbrowser.open_new( 'http://blocklyprop.creatingfuture.eu' )
 
     def handle_close(self):
         if tkMessageBox.askokcancel("Quit?", "Are you sure you want to quit?"):
