@@ -48,8 +48,19 @@ class BlocklyPropClient(tk.Tk):
 
     def initialize(self):
         self.grid()
+        
+        self.menubar = tk.Menu()
+        
+        self.about_menu = tk.Menu( self.menubar, tearoff=0 )
+        
+        self.about_menu.add_command( label="BlocklyPropClient Source Code", command=self.handle_client_code_browser )
+        self.about_menu.add_command( label="BlocklyProp Source Code", command=self.handle_code_browser )
+        self.about_menu.add_separator()
+        self.about_menu.add_command( label="About", command=self.about_info )
+        
+        self.menubar.add_cascade( label="About", menu=self.about_menu)
 
-        self.lbl_ip_address = ttk.Label(self, anchor=tk.E, text='IP Address :')
+        self.lbl_ip_address = tk.Label(self, anchor=tk.E, text='IP Address :')
         self.lbl_ip_address.grid(column=0, row=0, sticky='nesw')
 
         self.ent_ip_address = ttk.Entry(self, state='readonly', textvariable=self.ip_address)
@@ -88,6 +99,7 @@ class BlocklyPropClient(tk.Tk):
         self.grid_rowconfigure(4, weight=1)
         self.resizable(True, True)
         self.minsize(250, 200)
+        self.config( menu=self.menubar )
 
         self.protocol("WM_DELETE_WINDOW", self.handle_close)
 
@@ -118,6 +130,15 @@ class BlocklyPropClient(tk.Tk):
 
     def handle_browser(self):
         webbrowser.open_new( 'http://blocklyprop.creatingfuture.eu' )
+    
+    def handle_code_browser( self ):
+        webbrowser.open_new( 'http://github.com/parallaxinc/BlocklyProp' )
+    
+    def handle_client_code_browser( self ):
+        webbrowser.open_new( 'http://github.com/parallaxinc/BlocklyPropClient' )
+    
+    def about_info( self ):
+        tkMessageBox.showinfo( "About BlocklyProp", "CurrentVersion: v0.2.0\n\nAuthors: Vale Tolpegin & Michel Lampo\n\nRepository Source Code: http://github.com/parallaxinc/BlocklyPropClient\n\nCopyright 2015 Parallax Inc" )
 
     def handle_close(self):
         if tkMessageBox.askokcancel("Quit?", "Are you sure you want to quit?"):
