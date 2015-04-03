@@ -11,6 +11,7 @@ import webbrowser
 import os
 import ip
 import BlocklyServer
+from PropC_library_finder import propc_library_finder
 
 PORT = 6009
 VERSION = 0.2
@@ -42,23 +43,13 @@ class BlocklyPropClient(tk.Tk):
             pass
 
         self.initialize()
+        self.initialize_menu()
 
     def set_version(self, version):
         self.version = version
 
     def initialize(self):
         self.grid()
-        
-        self.menubar = tk.Menu()
-        
-        self.about_menu = tk.Menu( self.menubar, tearoff=0 )
-        
-        self.about_menu.add_command( label="BlocklyPropClient Source Code", command=self.handle_client_code_browser )
-        self.about_menu.add_command( label="BlocklyProp Source Code", command=self.handle_code_browser )
-        self.about_menu.add_separator()
-        self.about_menu.add_command( label="About", command=self.about_info )
-        
-        self.menubar.add_cascade( label="About", menu=self.about_menu)
 
         self.lbl_ip_address = tk.Label(self, anchor=tk.E, text='IP Address :')
         self.lbl_ip_address.grid(column=0, row=0, sticky='nesw')
@@ -99,7 +90,6 @@ class BlocklyPropClient(tk.Tk):
         self.grid_rowconfigure(4, weight=1)
         self.resizable(True, True)
         self.minsize(250, 200)
-        self.config( menu=self.menubar )
 
         self.protocol("WM_DELETE_WINDOW", self.handle_close)
 
@@ -112,6 +102,32 @@ class BlocklyPropClient(tk.Tk):
         monitor = threading.Thread(target=self.text_catcher)
         monitor.daemon = True
         monitor.start()
+    
+    def initialize_menu( self ):
+        menubar = tk.Menu( self )
+
+        file_menu = tk.Menu( menubar, tearoff=0 )
+        file_menu.add_command( label="Save" )
+        file_menu.add_command( label="Save As..." )
+        file_menu.add_command( label="Open" )
+        menubar.add_cascade( label="File", menu=file_menu )
+        
+        about_menu = tk.Menu( menubar, tearoff=0 )
+        about_menu.add_command( label="BlocklyPropClient Source Code", command=self.handle_client_code_browser )
+        about_menu.add_command( label="BlocklyProp Source Code", command=self.handle_code_browser )
+        about_menu.add_separator()
+        about_menu.add_command( label="About", command=self.about_info )
+        menubar.add_cascade( label="About", menu=about_menu)
+        
+        options_menu = tk.Menu( menubar, tearoff=0 )
+        options_menu.add_command( label="Set Library Location", command=self.handle_library_location )
+        menubar.add_cascade( label="Options", menu=options_menu )
+        
+        help_menu = tk.Menu( menubar, tearoff=0 )
+        help_menu.add_command( label="Help" )
+        menubar.add_cascade( label="Help", menu=help_menu )
+    
+        self.config( menu=menubar )
 
     def handle_connect(self):
         if self.connected:
@@ -136,6 +152,11 @@ class BlocklyPropClient(tk.Tk):
     
     def handle_client_code_browser( self ):
         webbrowser.open_new( 'http://github.com/parallaxinc/BlocklyPropClient' )
+    
+    def handle_library_location( self ):
+        library_finder = propc_library_finder()
+            
+        tkMessageBox.showinfo( "Info", "Library Location Set To: " + library_finder.get_directory() )
     
     def about_info( self ):
         tkMessageBox.showinfo( "About BlocklyProp", "CurrentVersion: v0.2.0\n\nAuthors: Vale Tolpegin & Michel Lampo\n\nRepository Source Code: http://github.com/parallaxinc/BlocklyPropClient\n\nCopyright 2015 Parallax Inc" )
