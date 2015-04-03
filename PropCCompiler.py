@@ -92,7 +92,10 @@ class PropCCompiler:
     def get_includes(self, includes):
         global lib_descriptor
         
-        lib_descriptor = json.load(open(os.getcwd() + "/lib-descriptor.json"))
+        try:
+            lib_descriptor = json.load(open(os.getcwd() + "/lib-descriptor.json"))
+        except:
+            lib_descriptor = json.load(open(os.getcwd() + "/propeller-c-lib/lib-descriptor.json" ))
         
         descriptors = []
         for include in includes:
@@ -140,6 +143,6 @@ class PropCCompiler:
 
 
 try:
-    lib_descriptor = json.load(open(os.getcwd() + "/propeller-c-lib/lib-descriptor.json"))
-except:
     lib_descriptor = json.load(open(os.getcwd() + "/lib-descriptor.json"))
+except:
+    lib_descriptor = json.load(open(os.getcwd() + "/propeller-c-lib/lib-descriptor.json"))
