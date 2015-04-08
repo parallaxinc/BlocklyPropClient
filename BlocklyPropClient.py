@@ -3,6 +3,7 @@ __author__ = 'Michel & Vale'
 import Tkinter as tk
 import ttk as ttk
 import tkMessageBox
+import tkFileDialog
 import ScrolledText
 import multiprocessing
 from datetime import datetime
@@ -10,6 +11,7 @@ import threading
 import webbrowser
 import os
 import ip
+import time
 import BlocklyServer
 from PropC_library_finder import propc_library_finder
 
@@ -51,7 +53,7 @@ class BlocklyPropClient(tk.Tk):
     def initialize(self):
         self.grid()
 
-        self.lbl_ip_address = tk.Label(self, anchor=tk.E, text='IP Address :')
+        self.lbl_ip_address = ttk.Label(self, anchor=tk.E, text='IP Address :')
         self.lbl_ip_address.grid(column=0, row=0, sticky='nesw')
 
         self.ent_ip_address = ttk.Entry(self, state='readonly', textvariable=self.ip_address)
@@ -68,6 +70,12 @@ class BlocklyPropClient(tk.Tk):
 
         self.btn_connect = ttk.Button(self, text='Connect', command=self.handle_connect)
         self.btn_connect.grid(column=1, row=2, sticky='nesw', padx=3, pady=3)
+        
+        self.lbl_current_code = ttk.Label( self, anchor=tk.E, text='Code most recently compiled :' )
+        self.lbl_current_code.grid(column=0, row=5, sticky='nesw', padx=3, pady=3)
+        
+        self.current_code = ScrolledText.ScrolledText( self, state='disabled')
+        self.current_code.grid(column=0, row=6, columnspan=2, sticky='nesw', padx=3, pady=3)
 
         self.lbl_log = ttk.Label(self, anchor=tk.W, text='Log :')
         self.lbl_log.grid(column=0, row=3, sticky='nesw', padx=3, pady=3)
@@ -103,12 +111,16 @@ class BlocklyPropClient(tk.Tk):
         monitor.daemon = True
         monitor.start()
     
+        code_monitor = threading.Thread( target=self.code_catcher)
+        code_monitor.daemon = True
+        code_monitor.start()
+    
     def initialize_menu( self ):
         menubar = tk.Menu( self )
 
         file_menu = tk.Menu( menubar, tearoff=0 )
         file_menu.add_command( label="Save" )
-        file_menu.add_command( label="Save As..." )
+        file_menu.add_command( label="Save As...", command=self.handle_save_as )
         file_menu.add_command( label="Open" )
         menubar.add_cascade( label="File", menu=file_menu )
         
@@ -144,6 +156,15 @@ class BlocklyPropClient(tk.Tk):
             self.connected = True
             self.btn_connect['text'] = "Disconnect"
 
+    def handle_save_as( self ):
+        file = tkFileDialog.asksaveasfile( mode='w' )
+        code = open( "c_code_file", 'r' ).read()
+
+        file.write( code )
+        file.close()
+    
+        tkMessageBox.showinfo( "Info", "The most recently compiled code has been saved to a file successfully"  )
+
     def handle_browser(self):
         webbrowser.open_new( 'http://blocklyprop.creatingfuture.eu' )
     
@@ -168,6 +189,20 @@ class BlocklyPropClient(tk.Tk):
                # BlocklyServer.stop()
                 self.server_process.terminate()
             self.quit()
+
+    def code_catcher( self ):
+        while 1:
+            try:
+                code = open( "c_code_file", 'r' ).read()
+            except:
+                code = ""
+
+            self.current_code['state'] = 'normal'
+            self.current_code.delete( "1.0", tk.END )
+            self.current_code.insert( "1.0", code )
+            self.current_code['state'] = 'disabled'
+
+            time.sleep( 2 )
 
     def text_catcher(self):
         while 1:

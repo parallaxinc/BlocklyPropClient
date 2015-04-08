@@ -9,7 +9,8 @@ from PropellerLoad import PropellerLoad
 from SpinCompiler import SpinCompiler
 from PropCCompiler import PropCCompiler
 
-import sys
+import sys, os
+
 
 PORT = 6009
 VERSION = 0.2
@@ -49,7 +50,11 @@ class BlocklyServer(object):
     @cherrypy.tools.allow(methods=['POST'])
     def compile(self, action, language, code, comport=None):
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
-
+        
+        file = open( "c_code_file", 'w' )
+        file.write( code )
+        file.close()
+        
         result = self.compiler[language].handle(action, code, comport)
         self.queue.put((10, 'INFO', 'Application compiled'+ ' (' + action + ' : ' + language + ')'))
         return result
