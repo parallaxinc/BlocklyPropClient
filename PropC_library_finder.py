@@ -43,7 +43,7 @@ class propc_library_finder:
     
     def assemble_information( self ):
         global library_path
-        output = "[\n"
+        output = {}
     
         #get directories
         directories = self.get_subdirectories( library_path )
@@ -59,27 +59,18 @@ class propc_library_finder:
                     if ( "." not in sub_directory ):
                         sub_directory_name = re.sub( "lib", "", sub_directory )
                         sub_directory_path = directory_path + sub_directory
-                
-                        output += '\t{\n\t\t'
-                        output += '"name": "' + sub_directory_name + '",\n\t\t'
-                        output += '"libdir": "' + sub_directory_path + '",\n\t\t'
-                        output += '"include": [\n\t\t\t' + '"' + sub_directory_name + '"'
-                        output += '\n\t\t],\n\t\t'
-                        output += '"memorymodel": {\n\t\t\t"cmm": "' + sub_directory_path + '/cmm/"' + '\n\t\t}\n\t},\n'
+                        
+                        output[ sub_directory_name ] = { "name" : sub_directory_name, "libdir" : sub_directory_path, "include" : sub_directory_name, "memorymode" : sub_directory_path + '/cmm/' }
             except:
                 pass
-    
-        output = output[:len(output) - 2]
-        output += '\n]'
         
         return output
 
     def create_json_file( self, data, file_name ):
         file = open( file_name, 'w' )
-        file.write( data )
+        json.dump( data, file )
         file.close()
-    
-        #json.dump( unicode( data ), file_name )
+        
         print json.load(open(os.getcwd() + "/lib-descriptor.json"))
     
     def askdirectory(self, **options):
