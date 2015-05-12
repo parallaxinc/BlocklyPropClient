@@ -117,13 +117,12 @@ class BlocklyPropClient(wx.Frame):
         if message.ShowModal() == wx.ID_OK:
             # stop server if running
             if self.connected:
-                BlocklyServer.stop(self.q)
+          #      BlocklyServer.stop(self.q)
                 self.server_process.terminate()
-                self.connected = False
+          #      self.connected = False
 
             message.Destroy()
-            self.Close()
-            exit()
+            self.on_exit_app(e)
 
         message.Destroy()
 
@@ -135,6 +134,9 @@ class BlocklyPropClient(wx.Frame):
                 self.ent_log.AppendText(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' ' + level_name + ': ' + message + '\n')
                 self.ent_log.PageDown()
              #   self.ent_log.yview_pickplace("end")
+
+    def on_exit_app(self, event):
+        self.Destroy()
 
 
 if __name__ == '__main__':
