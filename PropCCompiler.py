@@ -91,6 +91,15 @@ class PropCCompiler:
 
     def get_includes(self, includes):
         global lib_descriptor
+        global user_defined_libraries
+        
+        try:
+            lib_descriptor = json.load(open(os.getcwd() + "/lib-descriptor.json"))
+            user_defined_libraries = 1
+        except:
+            lib_descriptor = json.load(open(os.getcwd() + "/propeller-c-lib/lib-descriptor.json" ))
+            user_defined_libraries = 0
+        
         descriptors = []
         for include in includes:
             for descriptor in lib_descriptor:
@@ -111,9 +120,15 @@ class PropCCompiler:
         return includes
 
     def create_executing_data(self, c_file, binary_file, descriptors):
+        global user_defined_libraries
+        
         executable = self.compiler_executables[platform.system()]
-        lib_directory = self.appdir + "/propeller-c-lib/"
 
+        if user_defined_libraries == 1:
+            lib_directory = ""
+        else:
+            lib_directory = self.appdir + "/propeller-c-lib/"
+            
         executing_data = [executable]
         for descriptor in descriptors:
             executing_data.append("-I")
@@ -137,4 +152,9 @@ class PropCCompiler:
         return executing_data
 
 
-lib_descriptor = json.load(open(os.getcwd() + "/propeller-c-lib/lib-descriptor.json"))
+try:
+    lib_descriptor = json.load(open(os.getcwd() + "/lib-descriptor.json"))
+    user_defined_libraries = 1
+except:
+    lib_descriptor = json.load(open(os.getcwd() + "/propeller-c-lib/lib-descriptor.json"))
+    user_defined_libraries = 0

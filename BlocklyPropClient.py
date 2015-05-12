@@ -3,6 +3,7 @@ __author__ = 'Michel & Vale'
 import Tkinter as tk
 import ttk as ttk
 import tkMessageBox
+import tkFileDialog
 import ScrolledText
 import multiprocessing
 from datetime import datetime
@@ -10,7 +11,9 @@ import threading
 import webbrowser
 import os
 import ip
+import time
 import BlocklyServer
+from PropC_library_finder import propc_library_finder
 
 PORT = 6009
 VERSION = 0.2
@@ -42,6 +45,7 @@ class BlocklyPropClient(tk.Tk):
             pass
 
         self.initialize()
+        self.initialize_menu()
 
     def set_version(self, version):
         self.version = version
@@ -66,6 +70,12 @@ class BlocklyPropClient(tk.Tk):
 
         self.btn_connect = ttk.Button(self, text='Connect', command=self.handle_connect)
         self.btn_connect.grid(column=1, row=2, sticky='nesw', padx=3, pady=3)
+        
+        self.lbl_current_code = ttk.Label( self, anchor=tk.E, text='Code most recently compiled :' )
+        self.lbl_current_code.grid(column=0, row=5, sticky='nesw', padx=3, pady=3)
+        
+        self.current_code = ScrolledText.ScrolledText( self, state='disabled')
+        self.current_code.grid(column=0, row=6, columnspan=2, sticky='nesw', padx=3, pady=3)
 
         self.lbl_log = ttk.Label(self, anchor=tk.W, text='Log :')
         self.lbl_log.grid(column=0, row=3, sticky='nesw', padx=3, pady=3)
@@ -100,6 +110,36 @@ class BlocklyPropClient(tk.Tk):
         monitor = threading.Thread(target=self.text_catcher)
         monitor.daemon = True
         monitor.start()
+    
+        code_monitor = threading.Thread( target=self.code_catcher)
+        code_monitor.daemon = True
+        code_monitor.start()
+    
+    def initialize_menu( self ):
+        menubar = tk.Menu( self )
+
+        file_menu = tk.Menu( menubar, tearoff=0 )
+        file_menu.add_command( label="Save" )
+        file_menu.add_command( label="Save As...", command=self.handle_save_as )
+        file_menu.add_command( label="Open" )
+        menubar.add_cascade( label="File", menu=file_menu )
+        
+        about_menu = tk.Menu( menubar, tearoff=0 )
+        about_menu.add_command( label="BlocklyPropClient Source Code", command=self.handle_client_code_browser )
+        about_menu.add_command( label="BlocklyProp Source Code", command=self.handle_code_browser )
+        about_menu.add_separator()
+        about_menu.add_command( label="About", command=self.about_info )
+        menubar.add_cascade( label="About", menu=about_menu)
+        
+        options_menu = tk.Menu( menubar, tearoff=0 )
+        options_menu.add_command( label="Set Library Location", command=self.handle_library_location )
+        menubar.add_cascade( label="Options", menu=options_menu )
+        
+        help_menu = tk.Menu( menubar, tearoff=0 )
+        help_menu.add_command( label="Help" )
+        menubar.add_cascade( label="Help", menu=help_menu )
+    
+        self.config( menu=menubar )
 
     def handle_connect(self):
         if self.connected:
@@ -116,8 +156,31 @@ class BlocklyPropClient(tk.Tk):
             self.connected = True
             self.btn_connect['text'] = "Disconnect"
 
+    def handle_save_as( self ):
+        file = tkFileDialog.asksaveasfile( mode='w' )
+        code = open( "c_code_file", 'r' ).read()
+
+        file.write( code )
+        file.close()
+    
+        tkMessageBox.showinfo( "Info", "The most recently compiled code has been saved to a file successfully"  )
+
     def handle_browser(self):
         webbrowser.open_new( 'http://blocklyprop.creatingfuture.eu' )
+    
+    def handle_code_browser( self ):
+        webbrowser.open_new( 'http://github.com/parallaxinc/BlocklyProp' )
+    
+    def handle_client_code_browser( self ):
+        webbrowser.open_new( 'http://github.com/parallaxinc/BlocklyPropClient' )
+    
+    def handle_library_location( self ):
+        library_finder = propc_library_finder()
+            
+        tkMessageBox.showinfo( "Info", "Library Location Set To: " + library_finder.get_directory() )
+    
+    def about_info( self ):
+        tkMessageBox.showinfo( "About BlocklyProp", "CurrentVersion: v0.2.0\n\nAuthors: Vale Tolpegin & Michel Lampo\n\nRepository Source Code: http://github.com/parallaxinc/BlocklyPropClient\n\nCopyright 2015 Parallax Inc" )
 
     def handle_close(self):
         if tkMessageBox.askokcancel("Quit?", "Are you sure you want to quit?"):
@@ -126,6 +189,20 @@ class BlocklyPropClient(tk.Tk):
                # BlocklyServer.stop()
                 self.server_process.terminate()
             self.quit()
+
+    def code_catcher( self ):
+        while 1:
+            try:
+                code = open( "c_code_file", 'r' ).read()
+            except:
+                code = ""
+
+            self.current_code['state'] = 'normal'
+            self.current_code.delete( "1.0", tk.END )
+            self.current_code.insert( "1.0", code )
+            self.current_code['state'] = 'disabled'
+
+            time.sleep( 2 )
 
     def text_catcher(self):
         while 1:
