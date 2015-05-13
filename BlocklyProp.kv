@@ -1,0 +1,53 @@
+<BlocklyProp>:
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: [25, 9]
+        spacing: [25, 9]
+        BoxLayout:
+            orientation: 'horizontal'
+            padding: [0, 9]
+            spacing: [25, 9]
+            size: [1, 48]
+            size_hint: [1, None]
+            Label:
+                text: 'IP Address:'
+            TextInput:
+                readonly: True
+        BoxLayout:
+            orientation: 'horizontal'
+            padding: [0, 9]
+            spacing: [25, 9]
+            size: [1, 48]
+            size_hint: [1, None]
+            Label:
+                text: 'Port:'
+            TextInput:
+                text: '6009'
+        BoxLayout:
+            orientation: 'horizontal'
+            padding: [0, 9]
+            spacing: [25, 9]
+            size: [1, 60]
+            size_hint: [1, None]
+            Button:
+                text: 'Connect'
+        BoxLayout:
+            orientation: 'horizontal'
+            padding: [0, 9]
+            spacing: [25, 9]
+            size: [1, 48]
+            size_hint: [1, None]
+            Label:
+                text: 'Log:'
+            BoxLayout:
+                Label:
+                    text: 'Trace logging'
+                Switch:
+        BoxLayout:
+            orientation: 'horizontal'
+            padding: [0, 9]
+            spacing: [25, 9]
+            TextInput:
+                multiLine: True
+                readonly: True
