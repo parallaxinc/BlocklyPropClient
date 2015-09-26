@@ -65,4 +65,4 @@ class PropellerLoad:
         else:
             success = False
 
-        return (success, out, err)
+        return (success, out or '', err or '')

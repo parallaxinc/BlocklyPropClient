@@ -52,10 +52,12 @@ class BlocklyServer(object):
         binary_file.write(base64.b64decode(binary))
         binary_file.close()
 
-        self.propellerLoad.load(action, binary_file, comport)
-        (success, out, err) = self.queue.put((10, 'INFO', 'Application loaded'+ ' (' + action + ')'))
+        (success, out, err) = self.propellerLoad.load(action, binary_file, comport)
+        self.queue.put((10, 'INFO', 'Application loaded (%s)' % action))
 
-        result = {}
+        result = {
+            'message': out + err
+        }
         return result
 
     @cherrypy.expose(alias='serial.connect')
