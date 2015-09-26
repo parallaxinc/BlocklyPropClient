@@ -1,4 +1,5 @@
-__author__ = 'Michel'
+import base64
+import tempfile
 
 import cherrypy
 from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
@@ -6,14 +7,12 @@ from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 # BlocklyProp imports
 from SerialSocket import SerialSocket
 from PropellerLoad import PropellerLoad
-from SpinCompiler import SpinCompiler
-from PropCCompiler import PropCCompiler
 
 import sys, os
 
+__author__ = 'Michel'
 
 PORT = 6009
-VERSION = 0.2
 
 
 class BlocklyServer(object):
@@ -45,18 +44,20 @@ class BlocklyServer(object):
         return self.propellerLoad.get_ports()
 
 
-    @cherrypy.expose(alias='compile.action')
+    @cherrypy.expose(alias='load.action')
     @cherrypy.tools.json_out()
     @cherrypy.tools.allow(methods=['POST'])
-    def compile(self, action, language, code, comport=None):
+    def load(self, action, binary, extension, comport=None):
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
-        
-        file = open( "c_code_file", 'w' )
-        file.write( code )
-        file.close()
-        
-        result = self.compiler[language].handle(action, code, comport)
-        self.queue.put((10, 'INFO', 'Application compiled'+ ' (' + action + ' : ' + language + ')'))
+
+        binary_file = tempfile.TemporaryFile(suffix=extension)
+        binary_file.write(base64.b64decode(binary))
+        binary_file.close()
+
+        self.propellerLoad.load(action, binary_file, comport)
+        (success, out, err) = self.queue.put((10, 'INFO', 'Application loaded'+ ' (' + action + ')'))
+
+        result = {}
         return result
 
     @cherrypy.expose(alias='serial.connect')
@@ -66,11 +67,6 @@ class BlocklyServer(object):
         handler = cherrypy.request.ws_handler
 
     propellerLoad = PropellerLoad()
-
-    compiler = {
-        "spin": SpinCompiler(propellerLoad),
-        "prop-c": PropCCompiler(propellerLoad)
-    }
 
 
 def main(port, version, queue):
@@ -86,19 +82,10 @@ def main(port, version, queue):
         'tools.websocket.handler_cls': SerialSocket
     }})
 
-#        handler = BlocklyPropHTTPRequestHandler
-#        httpd = SocketServer.TCPServer(("", PORT), handler)
-#        print('started httpserver...')
-#        httpd.serve_forever()
-#    except KeyboardInterrupt:
-#        print('^C received, shutting down server')
-
-#        httpd.socket.close()
-
 
 def stop(queue):
     cherrypy.engine.stop()
     queue.put((10, 'INFO', 'Server disconnected'))
 
 if __name__ == '__main__':
-    main(PORT, VERSION, None)
+    main(PORT, 0.01, None)
