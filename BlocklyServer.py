@@ -8,8 +8,6 @@ from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 from SerialSocket import SerialSocket
 from PropellerLoad import PropellerLoad
 
-import sys, os
-
 __author__ = 'Michel'
 
 PORT = 6009
