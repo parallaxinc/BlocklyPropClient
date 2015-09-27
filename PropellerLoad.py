@@ -47,8 +47,10 @@ class PropellerLoad:
         executing_data.extend(self.load_actions[action]["compile-options"])
         if com_port is not None:
             executing_data.append("-p")
-            executing_data.append(com_port)
-        executing_data.append(file_to_load.name)
+            executing_data.append(com_port.encode('ascii', 'ignore'))
+        executing_data.append(file_to_load.name.encode('ascii', 'ignore').replace('\\', '/'))
+
+        print(executing_data)
 
         if platform.system() == "Windows":
             startupinfo = subprocess.STARTUPINFO()

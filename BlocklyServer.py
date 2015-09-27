@@ -1,4 +1,6 @@
 import base64
+import os
+import shutil
 import tempfile
 
 import cherrypy
@@ -48,12 +50,14 @@ class BlocklyServer(object):
     def load(self, action, binary, extension, comport=None):
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
 
-        binary_file = tempfile.TemporaryFile(suffix=extension)
+        binary_file = tempfile.NamedTemporaryFile(suffix=extension, delete=False)
         binary_file.write(base64.b64decode(binary))
         binary_file.close()
 
         (success, out, err) = self.propellerLoad.load(action, binary_file, comport)
         self.queue.put((10, 'INFO', 'Application loaded (%s)' % action))
+
+        os.remove(binary_file.name)
 
         result = {
             'message': out + err
