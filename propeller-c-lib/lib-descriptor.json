@@ -80,5 +80,15 @@
         "memorymodel": {
             "cmm": "Motor/libservo/cmm/"
         }
+    },
+    {
+        "name": "badgetools",
+        "libdir": "Utility/libbadgetools",
+        "include": [
+            "badgetools"
+        ],
+        "memorymodel": {
+            "cmm": "Utility/libbadgetools/cmm/"
+        }
     }
 ]
