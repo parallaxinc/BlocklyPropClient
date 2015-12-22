@@ -1,6 +1,5 @@
 import base64
 import os
-import shutil
 import tempfile
 
 import cherrypy
@@ -74,12 +73,15 @@ class BlocklyServer(object):
 
 
 def main(port, version, queue):
+    queue.put((10, 'INFO', 'Server starting'))
     # sys.stdout = open('stdfile.txt', 'w')
     # sys.stderr = open('errfile.txt', 'w')
 #    try:
-    cherrypy.config.update({'server.socket_port': port, 'log.access_file': 'access.txt'})
+    cherrypy.config.update({'server.socket_port': port})
     WebSocketPlugin(cherrypy.engine).subscribe()
     cherrypy.tools.websocket = WebSocketTool()
+
+    queue.put((10, 'INFO', 'Websocket configured'))
 
     cherrypy.quickstart(BlocklyServer(version, queue), '/', config={'/serial.connect': {
         'tools.websocket.on': True,
