@@ -15,8 +15,6 @@ exe = EXE(pyz,
           console=False,
           icon='blocklyprop.ico' )
 propeller_libs_and_tools = Tree('propeller-tools', prefix='propeller-tools', excludes=['*.pdf', 'linux', 'mac'])
-propeller_libs_and_tools += Tree('propeller-lib', prefix='propeller-lib')
-propeller_libs_and_tools += Tree('propeller-c-lib', prefix='propeller-c-lib', excludes=['*.html', 'html', '*.doxyfile', '*.side', '*.c'])
 propeller_libs_and_tools += [('blocklyprop.ico', 'blocklyprop.ico', 'Windows icon')]
 coll = COLLECT(exe,
                a.binaries,
