@@ -6,4 +6,4 @@ Contributors:
 
 Repository Source Code: http://github.com/parallaxinc/BlocklyPropClient
 
-Copyright 2015 Parallax Inc
+Copyright 2015 - 2016 Parallax Inc

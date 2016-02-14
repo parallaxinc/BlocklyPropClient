@@ -16,6 +16,8 @@ exe = EXE(pyz,
           icon='blocklyprop.ico' )
 propeller_libs_and_tools = Tree('propeller-tools', prefix='propeller-tools', excludes=['*.pdf', 'linux', 'mac'])
 propeller_libs_and_tools += [('blocklyprop.ico', 'blocklyprop.ico', 'Windows icon')]
+#propeller_libs_and_tools += [('blocklyprop.png', 'blocklyprop.png', 'Windows icon')]
+propeller_libs_and_tools += [('about.txt', 'about.txt', 'About file')]
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
