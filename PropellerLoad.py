@@ -42,7 +42,7 @@ class PropellerLoad:
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, startupinfo=startupinfo)
+            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
             out, err = process.communicate()
 
             self.ports = out.splitlines()
@@ -78,9 +78,9 @@ class PropellerLoad:
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-            process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, startupinfo=startupinfo)
+            process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
         else:
-            process = subprocess.Popen(executing_data, stdout=subprocess.PIPE)
+            process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         out, err = process.communicate()
 

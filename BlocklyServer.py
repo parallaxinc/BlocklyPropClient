@@ -59,7 +59,8 @@ class BlocklyServer(object):
         os.remove(binary_file.name)
 
         result = {
-            'message': out + err
+            'message': out + err,
+            'success': success
         }
         return result
 
