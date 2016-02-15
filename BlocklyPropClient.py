@@ -9,6 +9,7 @@ import threading
 import webbrowser
 import os
 import ip
+import sys
 import time
 import BlocklyServer
 
@@ -26,6 +27,9 @@ class BlocklyPropClient(tk.Tk):
         # initialize values
         self.version = 0.0
         self.connected = False
+
+        # Path
+        self.appdir = os.path.dirname(sys.argv[0])
 
         # initialize config variables
         self.ip_address = tk.StringVar()
@@ -171,7 +175,7 @@ class BlocklyPropClient(tk.Tk):
 
     def about_info(self):
         try:
-            with open('about.txt', 'r') as about_file:
+            with open(self.appdir + '/about.txt', 'r') as about_file:
                 tkMessageBox.showinfo("About BlocklyProp", about_file.read())
         except:
             tkMessageBox.showinfo("About BlocklyProp", "About file is missing")
