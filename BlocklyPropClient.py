@@ -165,7 +165,7 @@ class BlocklyPropClient(tk.Tk):
         tkMessageBox.showinfo("Info", "The most recently compiled code has been saved to a file successfully" )
 
     def handle_browser(self):
-        webbrowser.open_new('http://blocklyprop.creatingfuture.eu')
+        webbrowser.open_new('http://blockly.parallax.com')
 
     def handle_code_browser(self):
         webbrowser.open_new('http://github.com/parallaxinc/BlocklyProp')
