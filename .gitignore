@@ -1,5 +1,8 @@
 access.txt
 venv/
+node_modules/
+bower_components/
+static/*.css
 
 #################
 ## Eclipse

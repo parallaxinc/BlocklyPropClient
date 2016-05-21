@@ -1,0 +1,22 @@
+{
+  "name": "BlocklyPropClient",
+  "homepage": "https://github.com/parallaxinc/BlocklyPropClient",
+  "authors": [
+    "Michel Lampo <michel@creatingfuture.eu>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular-translate": "^2.11.0",
+    "bootstrap": "^3.3.6"
+  }
+}
