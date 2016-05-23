@@ -6,8 +6,10 @@ import logging
 
 from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 
-from utils.userpreferences import  UserPreferences
-import weblogger
+import WebLogger
+from WebSocketConnection import WebSocketConnection
+from utils.userpreferences import UserPreferences
+from utils import baseutils
 
 
 class GuiWebApplication:
@@ -15,17 +17,31 @@ class GuiWebApplication:
     def __init__(self, client):
         self.client = client
         self.user_preferences = UserPreferences()
+        self.web_socket_connection = None
+
+    @cherrypy.expose(alias='prelogin.json')
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.allow(methods=['GET'])
+    def pre_login(self):
+        return {
+            'login': self.user_preferences.get('user', 'login', ""),
+            'client-name': self.user_preferences.get('user', 'client', baseutils.getpcname())
+        }
 
     @cherrypy.expose(alias='login.do')
     @cherrypy.tools.json_out()
     @cherrypy.tools.allow(methods=['POST'])
     def login(self, login, password, identifier):
-        self.client.logged_in = True
-        return {
-            'login': login,
-            'password': password,
-            'identifier': identifier
-        }
+        self.web_socket_connection = WebSocketConnection(identifier)
+        if self.web_socket_connection.authenticate(login, password):
+            self.client.logged_in = True
+            return {'login failed': ''}
+        else:
+            return {
+                'login': login,
+                'password': password,
+                'identifier': identifier
+            }
 
     @cherrypy.expose(alias='test')
     @cherrypy.tools.allow(methods=['GET'])
@@ -53,7 +69,7 @@ class GuiServer:
     def start_server(self, http_port):
         self.http_port = http_port
 
-        web_logger = weblogger.WebLogger()
+        web_logger = WebLogger.WebLogger()
         logging.getLogger('').addHandler(web_logger)
 
         app_dir = os.path.dirname(sys.argv[0])
@@ -80,7 +96,7 @@ class GuiServer:
             },
             '/logging.stream': {
                 'tools.websocket.on': True,
-                'tools.websocket.handler_cls': weblogger.WebLoggerSocket
+                'tools.websocket.handler_cls': WebLogger.WebLoggerSocket
             }
         })
 
