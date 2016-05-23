@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="blocklypropclient">
+<html lang="en" ng-app="blocklyPropClientApp">
 <head>
     <meta charset="UTF-8">
     <title>BlocklyProp client</title>
@@ -14,58 +14,63 @@
 
     <script type="text/javascript" src="/static/blocklypropclient.js"></script>
 </head>
-<body>
-<!-- boot screen (extreme left) -->
-<div class="screen active" id="screen-boot"></div>
+<body ng-controller="blocklyPropClientController" ng-class="{booted: booted}">
+    <!-- boot screen (extreme left) -->
+    <div class="screen boot-active" id="screen-boot">
+        Booting
+    </div>
 
-<!-- login screen includes computer identifier (left) -->
-<div class="screen" id="screen-login">
-    <form id="form-login">
-        <div class="form-group">
-            <label for="login-field-login"></label>
-            <input id="login-field-login" name="login" type="text" class="form-control"/>
-        </div>
-        <div class="form-group">
-            <label for="login-field-password"></label>
-            <input id="login-field-password" name="password" type="password" class="form-control" />
-        </div>
-        <div class="form-group">
-            <label for="login-field-identifier"></label>
-            <input id="login-field-identifier" name="identifier" type="text" class="form-control" />
-        </div>
-        <button type="submit" class="btn btn-default">Login</button>
-    </form>
+    <!-- login screen includes computer identifier (left) -->
+    <div class="screen" ng-class="{active: screen=='login'}" id="screen-login">
+        <form id="form-login" ng-submit="authenticate()">
+            <div class="form-group">
+                <label for="login-field-login"></label>
+                <input id="login-field-login" name="login" type="text" class="form-control" ng-model="authform.login"
+                       value="{{authform.login}}"/>
+            </div>
+            <div class="form-group">
+                <label for="login-field-password"></label>
+                <input id="login-field-password" name="password" type="password" class="form-control"
+                       ng-model="authform.password"/>
+            </div>
+            <div class="form-group">
+                <label for="login-field-identifier"></label>
+                <input id="login-field-identifier" name="identifier" type="text" class="form-control"
+                       ng-model="authform.identifier" value="{{authform.identifier}}"/>
+            </div>
+            <button type="submit" class="btn btn-default">Login</button>
+        </form>
 
-</div>
+    </div>
 
-<!-- about screen (top) -->
-<div class="screen" id="screen-about">
-    <span class="title"></span>
-    <span class="description"></span>
-    <span class="authors"></span>
-    <span class="copyright"></span>
-</div>
+    <!-- about screen (top) -->
+    <div class="screen" ng-class="{active: screen=='about'}" id="screen-about">
+        <span class="title"></span>
+        <span class="description"></span>
+        <span class="authors"></span>
+        <span class="copyright"></span>
+    </div>
 
-<!-- configs: server url (top) -->
-<div class="screen" id="screen-config"></div>
+    <!-- configs: server url (top) -->
+    <div class="screen" ng-class="{active: screen=='config'}" id="screen-config"></div>
 
-<!-- connecting screen: also to be used when connection was temporarily lost -->
-<div class="screen" id="screen-connecting">
-    <span id="connecting-message"></span>
-    <span class="spinner"></span>
-    <a href="#disconnect" id="connecting-link-disconnect">Cancel connect</a>
-</div>
+    <!-- connecting screen: also to be used when connection was temporarily lost -->
+    <div class="screen" ng-class="{active: screen=='connecting'}" id="screen-connecting">
+        <span id="connecting-message"></span>
+        <span class="spinner"></span>
+        <a href="#disconnect" id="connecting-link-disconnect">Cancel connect</a>
+    </div>
 
-<!-- connected to server: log window + logout button (right) -->
-<div class="screen" id="screen-connected">
-    <textarea id="connected-log" readonly></textarea>
-    <a href="#disconnect" id="connected-link-disconnect">Disconnect</a>
-</div>
+    <!-- connected to server: log window + logout button (right) -->
+    <div class="screen" ng-class="{active: screen=='connected'}" id="screen-connected">
+        <textarea id="connected-log" readonly></textarea>
+        <a href="#disconnect" id="connected-link-disconnect">Disconnect</a>
+    </div>
 
-<!-- generic error screen (bottom) -->
-<div class="screen" id="screen-error">
+    <!-- generic error screen (bottom) -->
+    <div class="screen" ng-class="{active: screen=='error'}" id="screen-error">
 
-</div>
+    </div>
 
 </body>
 </html>

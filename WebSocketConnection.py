@@ -1,14 +1,8 @@
-from multiprocessing import Queue
-
 from SocketIOClient import SocketIOClient
 
 
-q = None
-
-
-def callback(data):
-    q.put(data)
-
+def authenticate_callback():
+    print('authenticationresult')
 
 class WebSocketConnection:
 
@@ -25,12 +19,8 @@ class WebSocketConnection:
             'password': password
         }
 
-        global q
-        q = Queue()
-        self.socketIO.emit('authenticate', authentication_data, callback)
-        response = q.get()
-        if response['success']:
-            return True
-        return False
+        self.socketIO.emit('authenticate', authentication_data, authenticate_callback)
+
+
 
 

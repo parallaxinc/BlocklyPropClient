@@ -25,7 +25,7 @@ class GuiWebApplication:
     def pre_login(self):
         return {
             'login': self.user_preferences.get('user', 'login', ""),
-            'client-name': self.user_preferences.get('user', 'client', baseutils.getpcname())
+            'identifier': self.user_preferences.get('user', 'client', baseutils.getpcname())
         }
 
     @cherrypy.expose(alias='login.do')
