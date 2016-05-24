@@ -7,6 +7,7 @@ import logging
 from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 
 import WebLogger
+import StreamSocket
 from WebSocketConnection import WebSocketConnection
 from utils.userpreferences import UserPreferences
 from utils import baseutils
@@ -25,7 +26,8 @@ class GuiWebApplication:
     def pre_login(self):
         return {
             'login': self.user_preferences.get('user', 'login', ""),
-            'identifier': self.user_preferences.get('user', 'client', baseutils.getpcname())
+            'identifier': self.user_preferences.get('user', 'client', baseutils.getpcname()),
+            'stream-websocket': 'ws://127.0.0.1:%s/stream.socket' % self.client.http_port
         }
 
     @cherrypy.expose(alias='login.do')
@@ -43,19 +45,17 @@ class GuiWebApplication:
                 'identifier': identifier
             }
 
-    @cherrypy.expose(alias='test')
-    @cherrypy.tools.allow(methods=['GET'])
-    def index(self):
-        return "Hello"
+    @cherrypy.expose(alias='log.do')
+    @cherrypy.tools.allow(methods=['GET','POST'])
+    def log(self, message):
+        logging.info(message)
 
-    @cherrypy.expose(alias='ports.json')
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.allow(methods=['GET'])
-    def ports(self):
-        return []
-
-    @cherrypy.expose(alias='logging.stream')
+    @cherrypy.expose(alias='logging.socket')
     def logging(self):
+        handler = cherrypy.request.ws_handler
+
+    @cherrypy.expose(alias='stream.socket')
+    def stream(self):
         handler = cherrypy.request.ws_handler
 
 
@@ -94,9 +94,13 @@ class GuiServer:
                 'tools.staticdir.on': True,
                 'tools.staticdir.dir': os.path.join(app_dir, 'bower_components/')
             },
-            '/logging.stream': {
+            '/logging.socket': {
                 'tools.websocket.on': True,
                 'tools.websocket.handler_cls': WebLogger.WebLoggerSocket
+            },
+            '/stream.socket': {
+                'tools.websocket.on': True,
+                'tools.websocket.handler_cls': StreamSocket.StreamSocket
             }
         })
 

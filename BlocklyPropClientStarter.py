@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
         logging.warn('Starting ui')
 
-        start_ui("http://localhost:{}/index.html".format(http_port))
+        start_ui("http://localhost:{}/index.html?1".format(http_port))
 
         try:
             gui_server.stop_server()

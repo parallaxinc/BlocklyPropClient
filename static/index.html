@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <title>BlocklyProp client</title>
 
-    <link type="text/css" rel="stylesheet" href="/libs/bootstrap/dist/css/bootstrap.min.css"/>
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="cache-control" content="no-cache">
+    <meta http-equiv="expires" content="-1">
+
+    <link type="text/css" rel="stylesheet" href="/libs/bootstrap/dist/css/bootstrap.css"/>
     <link type="text/css" rel="stylesheet" href="/static/style.css"/>
 
     <script type="text/javascript" src="/libs/jquery/dist/jquery.min.js"></script>
@@ -12,7 +16,8 @@
     <script type="text/javascript" src="/libs/angular/angular.min.js"></script>
     <script type="text/javascript" src="/libs/angular-translate/angular-translate.min.js"></script>
 
-    <script type="text/javascript" src="/static/blocklypropclient.js"></script>
+    <script type="text/javascript" src="/static/websocket.js?1"></script>
+    <script type="text/javascript" src="/static/blocklypropclient.js?1"></script>
 </head>
 <body ng-controller="blocklyPropClientController" ng-class="{booted: booted}">
     <!-- boot screen (extreme left) -->
@@ -23,6 +28,7 @@
     <!-- login screen includes computer identifier (left) -->
     <div class="screen" ng-class="{active: screen=='login'}" id="screen-login">
         <form id="form-login" ng-submit="authenticate()">
+            <div id="login-message">{{authform.message}}</div>
             <div class="form-group">
                 <label for="login-field-login"></label>
                 <input id="login-field-login" name="login" type="text" class="form-control" ng-model="authform.login"
