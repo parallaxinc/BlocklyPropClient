@@ -12,11 +12,11 @@ import ip
 import sys
 import time
 import BlocklyServer
+from utils.baseutils import getpcname
 
 __author__ = 'Michel & Vale'
 
-PORT = 6009
-VERSION = 0.3
+VERSION = 0.6
 
 
 class BlocklyPropClient(tk.Tk):
@@ -32,8 +32,8 @@ class BlocklyPropClient(tk.Tk):
         self.appdir = os.path.dirname(sys.argv[0])
 
         # initialize config variables
-        self.ip_address = tk.StringVar()
-        self.port = tk.StringVar()
+        self.computer_name = tk.StringVar()
+        self.authentication_key = tk.StringVar()
         self.trace_log = tk.IntVar()
 
         self.trace_log.set(1)
@@ -48,7 +48,7 @@ class BlocklyPropClient(tk.Tk):
             pass
 
         self.initialize()
-        self.initialize_menu()
+        # self.initialize_menu()
 
     def set_version(self, version):
         self.version = version
@@ -56,20 +56,20 @@ class BlocklyPropClient(tk.Tk):
     def initialize(self):
         self.grid()
 
-        self.lbl_ip_address = ttk.Label(self, anchor=tk.E, text='IP Address :')
-        self.lbl_ip_address.grid(column=0, row=0, sticky='nesw')
+        self.lbl_computer_name = ttk.Label(self, anchor=tk.E, text='Computer name :')
+        self.lbl_computer_name.grid(column=0, row=0, sticky='nesw')
 
-        self.ent_ip_address = ttk.Entry(self, state='readonly', textvariable=self.ip_address)
-        self.ent_ip_address.grid(column=1, row=0, sticky='nesw', padx=3, pady=3)
+        self.ent_computer_name = ttk.Entry(self, textvariable=self.computer_name)
+        self.ent_computer_name.grid(column=1, row=0, sticky='nesw', padx=3, pady=3)
 
-        self.lbl_port = ttk.Label(self, anchor=tk.E, text='Port :')
-        self.lbl_port.grid(column=0, row=1, sticky='nesw')
+        self.lbl_authentication_key = ttk.Label(self, anchor=tk.E, text='Authentication key :')
+        self.lbl_authentication_key.grid(column=0, row=1, sticky='nesw')
 
         self.btn_open_browser = ttk.Button(self, text='Open Browser', command=self.handle_browser)
         self.btn_open_browser.grid(column=0, row=2, sticky='nesw', padx=3, pady=3)
 
-        self.ent_port = ttk.Entry(self, textvariable=self.port)
-        self.ent_port.grid(column=1, row=1, sticky='nesw', padx=3, pady=3)
+        self.ent_authentication_key = ttk.Entry(self, state='readonly', textvariable=self.authentication_key)
+        self.ent_authentication_key.grid(column=1, row=1, sticky='nesw', padx=3, pady=3)
 
         self.btn_connect = ttk.Button(self, text='Connect', command=self.handle_connect)
         self.btn_connect.grid(column=1, row=2, sticky='nesw', padx=3, pady=3)
@@ -104,8 +104,7 @@ class BlocklyPropClient(tk.Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.handle_close)
 
-        self.ip_address.set(ip.get_lan_ip())
-        self.port.set(PORT)
+        self.computer_name.set(getpcname())
 
         self.q = multiprocessing.Queue()
  #       self.stdoutToQueue = StdoutToQueue(self.q)
