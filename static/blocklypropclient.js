@@ -14,6 +14,11 @@ blocklyPropClientApp.controller('blocklyPropClientController', ['$scope', '$http
         $http.post("log.do", $.param({'message': message}), {'headers' : {'Content-Type': 'application/x-www-form-urlencoded'}});
     };
 
+    $scope['disconnect'] = function() {
+        console.log("Disconnect");
+        $http.post("disconnect.do", $.param({}), {'headers' : {'Content-Type': 'application/x-www-form-urlencoded'}});
+    };
+
     $http.get('prelogin.json').then(function(response) {
         var data = response.data;
         $scope['authform']['login'] = data['login'];

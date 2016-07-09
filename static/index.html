@@ -64,7 +64,7 @@
     <div class="screen" ng-class="{active: screen=='connecting'}" id="screen-connecting">
         <span id="connecting-message"></span>
         <span class="spinner"></span>
-        <a href="#disconnect" id="connecting-link-disconnect">Cancel connect</a>
+        <a href="#disconnect" id="connecting-link-disconnect" ng-click="disconnect()">Cancel connect</a>
     </div>
 
     <!-- connected to server: log window + logout button (right) -->

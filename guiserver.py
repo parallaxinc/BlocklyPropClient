@@ -45,6 +45,14 @@ class GuiWebApplication:
                 'identifier': identifier
             }
 
+    @cherrypy.expose(alias='disconnect.do')
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.allow(methods=['POST'])
+    def disconnect(self):
+        print("Disconnect")
+        self.web_socket_connection.disconnect()
+        return {}
+
     @cherrypy.expose(alias='log.do')
     @cherrypy.tools.allow(methods=['GET','POST'])
     def log(self, message):

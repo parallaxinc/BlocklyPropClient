@@ -32,5 +32,5 @@ class StreamSocket(WebSocket):
         super(StreamSocket, self).terminate()
         StreamSocket.sockets.remove(self)
 
-    def handler_connected(self, event):
-        print('connected')
+    # def handler_connected(self, event):
+    #     print('connected')
