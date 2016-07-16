@@ -49,7 +49,7 @@ def serial_poll(serial, socket):
             data = serial.read(serial.inWaiting())
             if len(data) > 0:
                 # print 'Got:', data
-                data = re.sub("\r", "\n\r", data)
+                # data = re.sub("\r", "\n\r", data)
                 socket.send(data)
             sleep(0.5)
           #  print 'not blocked'
