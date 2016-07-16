@@ -26,6 +26,7 @@ OutputBaseFilename=BlocklyPropClient-setup
 SetupIconFile=dist\BlocklyPropClient.windows\blocklyprop.ico
 Compression=lzma
 SolidCompression=yes
+DisableWelcomePage=no
 
 [Messages]
 BeveledLabel=BlocklyPropClient Setup
