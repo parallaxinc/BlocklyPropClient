@@ -27,6 +27,7 @@ SetupIconFile=dist\BlocklyPropClient.windows\blocklyprop.ico
 Compression=lzma
 SolidCompression=yes
 DisableWelcomePage=no
+WizardImageFile=BlocklyPropClient-windows-installer-background.bmp
 
 [Messages]
 BeveledLabel=BlocklyPropClient Setup
