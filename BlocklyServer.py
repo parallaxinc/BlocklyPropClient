@@ -78,7 +78,7 @@ def main(port, version, queue):
     # sys.stdout = open('stdfile.txt', 'w')
     # sys.stderr = open('errfile.txt', 'w')
 #    try:
-    cherrypy.config.update({'server.socket_port': port})
+    cherrypy.config.update({'server.socket_port': port, 'server.socket_host': '0.0.0.0'})
     WebSocketPlugin(cherrypy.engine).subscribe()
     cherrypy.tools.websocket = WebSocketTool()
 
