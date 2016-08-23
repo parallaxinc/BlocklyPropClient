@@ -16,7 +16,7 @@ import BlocklyServer
 __author__ = 'Michel & Vale'
 
 PORT = 6009
-VERSION = 0.3
+VERSION = 0.4
 
 
 class BlocklyPropClient(tk.Tk):
