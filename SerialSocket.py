@@ -17,20 +17,30 @@ class SerialSocket(WebSocket):
 
     def received_message(self, message):
         if message.data[0:len(OPEN_CONNECTION_STRING)] == OPEN_CONNECTION_STRING:
-            port = message.data[len(OPEN_CONNECTION_STRING):]
+            connection_string = message.data[len(OPEN_CONNECTION_STRING):]
+
+            port = connection_string
+            baudrate = 115200
+
+            connection_info = connection_string.split(' ')
+            if len(connection_info) == 2:
+                port = connection_info[0]
+                baudrate = connection_info[1]
+
+            self.serial.baudrate = baudrate
             self.serial.port = port
-            self.serial.baudrate = 115200
+
             try:
                 self.serial.open()
             except SerialException as se:
-                self.send("Failed to connect to: " + port + "\n\r(" + se.message + ")\n\r")
+                self.send("Failed to connect to: %s using baud rate %s\n\r(%s)\n\r" % (port, baudrate, se.message))
                 return
 
             if self.serial.isOpen():
-                self.send("Connection established with: " + port + "\n\r")
+                self.send("Connection established with: %s using baud rate %s\n\r" % (port, baudrate))
                 thread.start_new_thread(serial_poll, (self.serial, self))
             else:
-                self.send("Failed to connect to: " + port + "\n\r")
+                self.send("Failed to connect to: %s using baud rate %s\n\r" % (port, baudrate))
         else:
             if self.serial.isOpen():
                 self.send(message.data)
@@ -49,7 +59,7 @@ def serial_poll(serial, socket):
             data = serial.read(serial.inWaiting())
             if len(data) > 0:
                 # print 'Got:', data
-                data = re.sub("\r", "\n\r", data)
+                # data = re.sub("\r", "\n\r", data)
                 socket.send(data)
             sleep(0.5)
           #  print 'not blocked'
