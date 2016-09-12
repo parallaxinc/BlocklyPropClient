@@ -42,7 +42,14 @@ class BlocklyServer(object):
     def ports(self):
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
         self.queue.put((3, 'DEBUG', 'Port list retrieved'))
-        return self.propellerLoad.get_ports()
+        
+        ports = self.propellerLoad.get_ports()
+        filtered_ports = []
+        for port in ports:
+            if ' bt ' not in port.lower() and 'bluetooth' not in port.lower():
+                filtered_ports.append(port)
+        return filtered_ports
+
 
 
     @cherrypy.expose(alias='compile.action')
