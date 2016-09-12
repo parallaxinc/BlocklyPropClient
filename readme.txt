@@ -13,3 +13,9 @@ Running
 BlocklyPropClient has been written using Python 2.7 but packaged so it runs without having to install any dependencies.
 
 The only requirement it has is that ftdi drivers are installed to allow serial connection over usb.
+
+
+Changelog
+-----------------
+
+9/12/2016: Filter out Bluetooth ports
