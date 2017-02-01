@@ -10,7 +10,6 @@ import webbrowser
 import os
 import ip
 import sys
-import time
 import BlocklyServer
 
 __author__ = 'Michel & Vale'
