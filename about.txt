@@ -1,9 +1,10 @@
-CurrentVersion: v0.5.0
+CurrentVersion: v0.5.1
 
 Contributors:
 - Michel Lampo
 - Vale Tolpegin
+- Jim Ewald
 
 Repository Source Code: http://github.com/parallaxinc/BlocklyPropClient
 
-Copyright 2015 - 2016 Parallax Inc
+Copyright 2015 - 2017 Parallax Inc
