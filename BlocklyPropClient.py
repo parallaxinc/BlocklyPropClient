@@ -10,19 +10,25 @@ import webbrowser
 import os
 import ip
 import sys
-import BlocklyServer
 import logging
+import BlocklyServer
+import BlocklyLogger
 
 
 __author__ = 'Michel & Vale'
 
 PORT = 6009
-VERSION = 0.5
+VERSION = "0.5.1"
 
+# Enable logging for functions outside of the class definition
+module_logger = logging.getLogger('blockly')
 
 class BlocklyPropClient(tk.Tk):
-
     def __init__(self, *args, **kwargs):
+        BlocklyLogger.init()
+        self.logger = logging.getLogger('blockly.main')
+        self.logger.info('Creating logger.')
+
         tk.Tk.__init__(self, *args, **kwargs)
 
         # initialize values
@@ -31,32 +37,7 @@ class BlocklyPropClient(tk.Tk):
 
         # Path
         self.appdir = os.path.dirname(sys.argv[0])
-
-        # Logging path
-        try:  # Python 2.7+
-            from logging import NullHandler
-        except ImportError:
-            class NullHandler(logging.Handler):
-                def emit(self, record):
-                    pass
-
-        logging.getLogger(__name__).addHandler(NullHandler())
-
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger(__name__)
-
-        # create a file handler
-        handler = logging.FileHandler('BlocklyPropClient.log', mode='w')
-        handler.setLevel(logging.INFO)
-
-        # create a logging format
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-
-        # add the handlers to the logger
-        log.addHandler(handler)
-
-        log.info('Logging is enabled')
+        self.logger.info('Logging is enabled')
 
         # initialize config variables
         self.ip_address = tk.StringVar()
@@ -69,7 +50,7 @@ class BlocklyPropClient(tk.Tk):
         self.title("BlocklyProp")
 
         # Set icon
-        log.info('Operating system is %s', os.name)
+        self.logger.info('Operating system is %s', os.name)
         if "nt" == os.name:
             self.wm_iconbitmap(bitmap='blocklyprop.ico')
         else:
@@ -80,15 +61,11 @@ class BlocklyPropClient(tk.Tk):
         self.initialize_menu()
 
     def set_version(self, version):
-        log = logging.getLogger(__name__)
-        log.info('Application version is %s', version)
-
+        self.logger.info('Application version is %s', version)
         self.version = version
 
     def initialize(self):
-        log = logging.getLogger(__name__)
-        log.info('Initializing the UI')
-
+        self.logger.info('Initializing the UI')
         self.grid()
 
         self.lbl_ip_address = ttk.Label(self, anchor=tk.E, text='IP Address :')
@@ -140,10 +117,10 @@ class BlocklyPropClient(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.handle_close)
 
         self.ip_address.set(ip.get_lan_ip())
-        logging.info('Client IP is: %s', self.ip_address.get())
+        self.logger.info('Client IP is: %s', self.ip_address.get())
 
         self.port.set(PORT)
-        logging.info('Port number is: %s', self.port.get())
+        self.logger.info('Port number is: %s', self.port.get())
 
         self.q = multiprocessing.Queue()
  #       self.stdoutToQueue = StdoutToQueue(self.q)
@@ -153,8 +130,7 @@ class BlocklyPropClient(tk.Tk):
         monitor.start()
 
     def initialize_menu( self ):
-        log = logging.getLogger(__name__)
-        log.info('Initializing the UI menu')
+        self.logger.info('Initializing the UI menu')
 
         menubar = tk.Menu( self )
 
@@ -182,8 +158,7 @@ class BlocklyPropClient(tk.Tk):
         self.config( menu=menubar )
 
     def handle_connect(self):
-        log = logging.getLogger(__name__)
-        log.info('Connect state is: ', self.connected)
+        self.logger.info('Connect state is: %s', self.connected)
 
         if self.connected:
             BlocklyServer.stop(self.q)
@@ -225,11 +200,10 @@ class BlocklyPropClient(tk.Tk):
             tkMessageBox.showinfo("About BlocklyProp", "About file is missing")
 
     def handle_close(self):
-        log = logging.getLogger(__name__)
-        log.info('Opening Quit dialog')
+        self.logger.info('Opening Quit dialog')
 
         if tkMessageBox.askokcancel("Quit?", "Are you sure you want to quit?"):
-            log.info('Quitting')
+            self.logger.info('Quitting')
             # stop server if running
             if self.connected:
                # BlocklyServer.stop()
@@ -237,18 +211,19 @@ class BlocklyPropClient(tk.Tk):
             self.quit()
 
     def text_catcher(self):
-        log = logging.getLogger(__name__)
+        try:
+            while 1:
+                (level, level_name, message) = self.q.get()
+                min_level = self.trace_log.get() * 5
 
-        while 1:
-            (level, level_name, message) = self.q.get()
-            log.info('Catching - Name: %s  Message: $s', level_name, message)
-
-            min_level = self.trace_log.get() * 5
-            if level > min_level:
-                self.ent_log['state'] = 'normal'
-                self.ent_log.insert(tk.END, datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' ' + level_name + ': ' + message + '\n')
-                self.ent_log.yview_pickplace("end")
-                self.ent_log['state'] = 'disabled'
+                if level > min_level:
+                    self.ent_log['state'] = 'normal'
+                    self.ent_log.insert(tk.END, datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' ' + level_name + ': ' + message + '\n')
+                    self.ent_log.yview_pickplace("end")
+                    self.ent_log['state'] = 'disabled'
+        except EOFError:
+            print('EOF Error')
+#            self.logger.error('Unexpected end of file encountered')
 
 
 if __name__ == '__main__':

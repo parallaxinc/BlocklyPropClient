@@ -1,6 +1,7 @@
 import base64
 import os
 import tempfile
+import logging
 
 import cherrypy
 from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
@@ -53,6 +54,10 @@ class BlocklyServer(object):
     @cherrypy.tools.json_out()
     @cherrypy.tools.allow(methods=['POST'])
     def load(self, action, binary, extension, comport=None):
+        if action is None:
+            logger = logging.getLogger('blockly.server')
+            logger.error('Load action is undefined.')
+
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
 
         binary_file = tempfile.NamedTemporaryFile(suffix=extension, delete=False)
