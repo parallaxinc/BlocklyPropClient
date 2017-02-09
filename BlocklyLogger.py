@@ -1,6 +1,6 @@
 import logging
 from sys import platform
-from subprocess import Popen, PIPE, check_output
+from subprocess import Popen, PIPE, check_output, CalledProcessError
 
 
 # Logging path
@@ -40,20 +40,32 @@ logger.addHandler(console)
 def init():
     logger.info("Logger has been started.")
     if platform == 'linux2':
-        is_module_loaded()
-        check_system_messages()
+        if is_module_loaded() != 0:
+            return
+
+        if check_system_messages() != 0:
+            return
 
 
 def is_module_loaded():
-
-    process = Popen(['cat', '/proc/modules'], stdout=PIPE, stderr=PIPE)
-    output = check_output(('grep', 'ftdi'), stdin=process.stdout)
-    logger.debug('FTDI module load state')
-    logger.debug(output)
+    try:
+        process = Popen(['cat', '/proc/modules'], stdout=PIPE, stderr=PIPE)
+        output = check_output(('grep', 'ftdi'), stdin=process.stdout)
+        logger.debug('FTDI module load state')
+        logger.debug(output)
+        return 0
+    except CalledProcessError:
+        logger.warning('No FTDI modules detected.')
+        return 1
 
 
 def check_system_messages():
-    process = Popen(['dmesg', '-H', '-x'], stdout=PIPE, stderr=PIPE)
-    output = check_output(('grep', 'ftdi'), stdin=process.stdout)
-    process.wait()
-    logger.debug(output)
+    try:
+        process = Popen(['dmesg', '-H', '-x'], stdout=PIPE, stderr=PIPE)
+        output = check_output(('grep', 'ftdi'), stdin=process.stdout)
+        process.wait()
+        logger.debug(output)
+        return 0
+    except CalledProcessError:
+        logger.warning('Serial port is not assigned.')
+        return 1

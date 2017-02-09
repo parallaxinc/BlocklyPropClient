@@ -121,6 +121,7 @@ class BlocklyPropClient(tk.Tk):
 
         self.port.set(PORT)
         self.logger.info('Port number is: %s', self.port.get())
+        self.server_process = None
 
         self.q = multiprocessing.Queue()
  #       self.stdoutToQueue = StdoutToQueue(self.q)
@@ -132,29 +133,13 @@ class BlocklyPropClient(tk.Tk):
     def initialize_menu( self ):
         self.logger.info('Initializing the UI menu')
 
-        menubar = tk.Menu( self )
-
-#        file_menu = tk.Menu( menubar, tearoff=0 )
-#        file_menu.add_command( label="Save" )
-#        file_menu.add_command( label="Save As...", command=self.handle_save_as )
-#        file_menu.add_command( label="Open" )
-#        menubar.add_cascade( label="File", menu=file_menu )
-
+        menubar = tk.Menu(self)
         about_menu = tk.Menu( menubar, tearoff=0 )
         about_menu.add_command( label="BlocklyPropClient Source Code", command=self.handle_client_code_browser )
         about_menu.add_command( label="BlocklyProp Source Code", command=self.handle_code_browser )
         about_menu.add_separator()
         about_menu.add_command( label="About", command=self.about_info )
         menubar.add_cascade( label="About", menu=about_menu)
-
-#        options_menu = tk.Menu( menubar, tearoff=0 )
-#        options_menu.add_command( label="Set Library Location", command=self.handle_library_location )
-#        menubar.add_cascade( label="Options", menu=options_menu )
-
-#        help_menu = tk.Menu( menubar, tearoff=0 )
-#        help_menu.add_command( label="Help" )
-#        menubar.add_cascade( label="Help", menu=help_menu )
-
         self.config( menu=menubar )
 
     def handle_connect(self):
@@ -167,7 +152,10 @@ class BlocklyPropClient(tk.Tk):
             self.btn_connect['text'] = "Connect"
         else:
             # read entered values and start server
-            self.server_process = multiprocessing.Process(target=BlocklyServer.main, args=(int(self.port.get()), self.version, self.q)) #, kwargs={'out':self.stdoutToQueue})
+            self.server_process = multiprocessing.Process(
+                target=BlocklyServer.main,
+                args=(int(self.port.get()), self.version, self.q))
+
            # self.server_process = threading.Thread(target=BlocklyServer.main, args=(int(self.port.get()), self.version)) #, kwargs={'out':self.stdoutToQueue})
             self.server_process.start()
 
