@@ -10,17 +10,25 @@ import webbrowser
 import os
 import ip
 import sys
+import logging
 import BlocklyServer
+import BlocklyLogger
+
 
 __author__ = 'Michel & Vale'
 
 PORT = 6009
-VERSION = 0.5
+VERSION = "0.5.1"
 
+# Enable logging for functions outside of the class definition
+module_logger = logging.getLogger('blockly')
 
 class BlocklyPropClient(tk.Tk):
-
     def __init__(self, *args, **kwargs):
+        BlocklyLogger.init()
+        self.logger = logging.getLogger('blockly.main')
+        self.logger.info('Creating logger.')
+
         tk.Tk.__init__(self, *args, **kwargs)
 
         # initialize values
@@ -29,17 +37,20 @@ class BlocklyPropClient(tk.Tk):
 
         # Path
         self.appdir = os.path.dirname(sys.argv[0])
+        self.logger.info('Logging is enabled')
 
         # initialize config variables
         self.ip_address = tk.StringVar()
         self.port = tk.StringVar()
         self.trace_log = tk.IntVar()
 
+        # Default trace to enabled or logging level 1, not sure which it is
         self.trace_log.set(1)
 
         self.title("BlocklyProp")
 
         # Set icon
+        self.logger.info('Operating system is %s', os.name)
         if "nt" == os.name:
             self.wm_iconbitmap(bitmap='blocklyprop.ico')
         else:
@@ -50,9 +61,11 @@ class BlocklyPropClient(tk.Tk):
         self.initialize_menu()
 
     def set_version(self, version):
+        self.logger.info('Application version is %s', version)
         self.version = version
 
     def initialize(self):
+        self.logger.info('Initializing the UI')
         self.grid()
 
         self.lbl_ip_address = ttk.Label(self, anchor=tk.E, text='IP Address :')
@@ -104,7 +117,11 @@ class BlocklyPropClient(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.handle_close)
 
         self.ip_address.set(ip.get_lan_ip())
+        self.logger.info('Client IP is: %s', self.ip_address.get())
+
         self.port.set(PORT)
+        self.logger.info('Port number is: %s', self.port.get())
+        self.server_process = None
 
         self.q = multiprocessing.Queue()
  #       self.stdoutToQueue = StdoutToQueue(self.q)
@@ -114,32 +131,20 @@ class BlocklyPropClient(tk.Tk):
         monitor.start()
 
     def initialize_menu( self ):
-        menubar = tk.Menu( self )
+        self.logger.info('Initializing the UI menu')
 
-#        file_menu = tk.Menu( menubar, tearoff=0 )
-#        file_menu.add_command( label="Save" )
-#        file_menu.add_command( label="Save As...", command=self.handle_save_as )
-#        file_menu.add_command( label="Open" )
-#        menubar.add_cascade( label="File", menu=file_menu )
-
+        menubar = tk.Menu(self)
         about_menu = tk.Menu( menubar, tearoff=0 )
         about_menu.add_command( label="BlocklyPropClient Source Code", command=self.handle_client_code_browser )
         about_menu.add_command( label="BlocklyProp Source Code", command=self.handle_code_browser )
         about_menu.add_separator()
         about_menu.add_command( label="About", command=self.about_info )
         menubar.add_cascade( label="About", menu=about_menu)
-
-#        options_menu = tk.Menu( menubar, tearoff=0 )
-#        options_menu.add_command( label="Set Library Location", command=self.handle_library_location )
-#        menubar.add_cascade( label="Options", menu=options_menu )
-
-#        help_menu = tk.Menu( menubar, tearoff=0 )
-#        help_menu.add_command( label="Help" )
-#        menubar.add_cascade( label="Help", menu=help_menu )
-
         self.config( menu=menubar )
 
     def handle_connect(self):
+        self.logger.info('Connect state is: %s', self.connected)
+
         if self.connected:
             BlocklyServer.stop(self.q)
             self.server_process.terminate()
@@ -147,7 +152,10 @@ class BlocklyPropClient(tk.Tk):
             self.btn_connect['text'] = "Connect"
         else:
             # read entered values and start server
-            self.server_process = multiprocessing.Process(target=BlocklyServer.main, args=(int(self.port.get()), self.version, self.q)) #, kwargs={'out':self.stdoutToQueue})
+            self.server_process = multiprocessing.Process(
+                target=BlocklyServer.main,
+                args=(int(self.port.get()), self.version, self.q))
+
            # self.server_process = threading.Thread(target=BlocklyServer.main, args=(int(self.port.get()), self.version)) #, kwargs={'out':self.stdoutToQueue})
             self.server_process.start()
 
@@ -180,7 +188,10 @@ class BlocklyPropClient(tk.Tk):
             tkMessageBox.showinfo("About BlocklyProp", "About file is missing")
 
     def handle_close(self):
+        self.logger.info('Opening Quit dialog')
+
         if tkMessageBox.askokcancel("Quit?", "Are you sure you want to quit?"):
+            self.logger.info('Quitting')
             # stop server if running
             if self.connected:
                # BlocklyServer.stop()
@@ -188,14 +199,19 @@ class BlocklyPropClient(tk.Tk):
             self.quit()
 
     def text_catcher(self):
-        while 1:
-            (level, level_name, message) = self.q.get()
-            min_level = self.trace_log.get() * 5
-            if level > min_level:
-                self.ent_log['state'] = 'normal'
-                self.ent_log.insert(tk.END, datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' ' + level_name + ': ' + message + '\n')
-                self.ent_log.yview_pickplace("end")
-                self.ent_log['state'] = 'disabled'
+        try:
+            while 1:
+                (level, level_name, message) = self.q.get()
+                min_level = self.trace_log.get() * 5
+
+                if level > min_level:
+                    self.ent_log['state'] = 'normal'
+                    self.ent_log.insert(tk.END, datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ' ' + level_name + ': ' + message + '\n')
+                    self.ent_log.yview_pickplace("end")
+                    self.ent_log['state'] = 'disabled'
+        except EOFError:
+            print('EOF Error')
+#            self.logger.error('Unexpected end of file encountered')
 
 
 if __name__ == '__main__':
