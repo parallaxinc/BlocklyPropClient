@@ -1,0 +1,6 @@
+[Temporary set of manual command-lines for building and packaging BlocklyPropClient for Mac]
+
+pkgbuild --root BlocklyPropClient.app --identifier com.ParallaxInc.BlocklyPropClient --timestamp --install-location "/Applications/BlocklyPropClient
+.app" --sign "Developer ID Installer" --version 0.5.1 BlocklyPropClient.pkg
+
+productbuild --distribution ./DistributionBPC.xml --resources ./ --timestamp --version 0.5.1 --package-path ./ --sign "Developer ID Installer" ./BlocklyPropClient-MacOS.pkg

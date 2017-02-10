@@ -4,6 +4,7 @@ Contributors:
 - Michel Lampo
 - Vale Tolpegin
 - Jim Ewald
+- Jeff Martin
 
 Repository Source Code: http://github.com/parallaxinc/BlocklyPropClient
 
