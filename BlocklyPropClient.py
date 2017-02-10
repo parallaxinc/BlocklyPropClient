@@ -1,3 +1,7 @@
+"""
+    BlocklyProp Client
+
+"""
 import Tkinter as tk
 import ttk as ttk
 import tkMessageBox
@@ -13,6 +17,7 @@ import sys
 import logging
 import BlocklyServer
 import BlocklyLogger
+import BlocklyHardware
 
 
 __author__ = 'Michel & Vale'
@@ -20,15 +25,22 @@ __author__ = 'Michel & Vale'
 PORT = 6009
 VERSION = "0.5.1"
 
+
 # Enable logging for functions outside of the class definition
 module_logger = logging.getLogger('blockly')
 
+
 class BlocklyPropClient(tk.Tk):
     def __init__(self, *args, **kwargs):
+
+        # Enable application logging
         BlocklyLogger.init()
         self.logger = logging.getLogger('blockly.main')
         self.logger.info('Creating logger.')
 
+        BlocklyHardware.init()
+
+        # Init Tk
         tk.Tk.__init__(self, *args, **kwargs)
 
         # initialize values
@@ -43,6 +55,7 @@ class BlocklyPropClient(tk.Tk):
         self.ip_address = tk.StringVar()
         self.port = tk.StringVar()
         self.trace_log = tk.IntVar()
+        self.logfile = tk.StringVar()
 
         # Default trace to enabled or logging level 1, not sure which it is
         self.trace_log.set(1)
@@ -59,6 +72,7 @@ class BlocklyPropClient(tk.Tk):
 
         self.initialize()
         self.initialize_menu()
+        # Verify the hardware is connected and available
 
     def set_version(self, version):
         self.logger.info('Application version is %s', version)
@@ -66,25 +80,51 @@ class BlocklyPropClient(tk.Tk):
 
     def initialize(self):
         self.logger.info('Initializing the UI')
+
+        # Display the client screen
         self.grid()
 
+        # IP address label
         self.lbl_ip_address = ttk.Label(self, anchor=tk.E, text='IP Address :')
         self.lbl_ip_address.grid(column=0, row=0, sticky='nesw')
 
-        self.ent_ip_address = ttk.Entry(self, state='readonly', textvariable=self.ip_address)
-        self.ent_ip_address.grid(column=1, row=0, sticky='nesw', padx=3, pady=3)
-
+        # TCP port number label
         self.lbl_port = ttk.Label(self, anchor=tk.E, text='Port :')
         self.lbl_port.grid(column=0, row=1, sticky='nesw')
 
-        self.btn_open_browser = ttk.Button(self, text='Open Browser', command=self.handle_browser)
-        self.btn_open_browser.grid(column=0, row=2, sticky='nesw', padx=3, pady=3)
+        # Log file label
+        self.lbl_logfile = ttk.Label(self, anchor=tk.E, text='Log File :')
+        self.lbl_logfile.grid(column=0, row=2, sticky='nesw')
 
+        # Open browser button
+        self.btn_open_browser = ttk.Button(self, text='Open Browser', command=self.handle_browser)
+        self.btn_open_browser.grid(column=0, row=3, sticky='nesw', padx=3, pady=3)
+
+        # Trace label
+        self.lbl_log = ttk.Label(self, anchor=tk.W, text='Trace :')
+        self.lbl_log.grid(column=0, row=4, sticky='nesw', padx=3, pady=3)
+
+        # Trace log display window
+        self.ent_log = ScrolledText.ScrolledText(self, state='disabled')
+        self.ent_log.grid(column=0, row=5, columnspan=2, sticky='nesw', padx=3, pady=3)
+
+
+        # IP address text box
+        self.ent_ip_address = ttk.Entry(self, state='readonly', textvariable=self.ip_address)
+        self.ent_ip_address.grid(column=1, row=0, sticky='nesw', padx=3, pady=3)
+
+        # TCP port text box
         self.ent_port = ttk.Entry(self, textvariable=self.port)
         self.ent_port.grid(column=1, row=1, sticky='nesw', padx=3, pady=3)
 
+        # Log file text box
+        self.ent_logfile = ttk.Entry(self, textvariable=self.logfile)
+        self.ent_logfile.grid(column=1, row=2, sticky='nesw', padx=3, pady=3)
+
+
+        # Connect to device button
         self.btn_connect = ttk.Button(self, text='Connect', command=self.handle_connect)
-        self.btn_connect.grid(column=1, row=2, sticky='nesw', padx=3, pady=3)
+        self.btn_connect.grid(column=1, row=3, sticky='nesw', padx=3, pady=3)
 
         #self.lbl_current_code = ttk.Label( self, anchor=tk.E, text='Code most recently compiled :' )
         #self.lbl_current_code.grid(column=0, row=5, sticky='nesw', padx=3, pady=3)
@@ -92,18 +132,13 @@ class BlocklyPropClient(tk.Tk):
         #self.current_code = ScrolledText.ScrolledText( self, state='disabled')
         #self.current_code.grid(column=0, row=6, columnspan=2, sticky='nesw', padx=3, pady=3)
 
-        self.lbl_log = ttk.Label(self, anchor=tk.W, text='Log :')
-        self.lbl_log.grid(column=0, row=3, sticky='nesw', padx=3, pady=3)
+        self.check_log_trace = tk.Checkbutton(self, anchor=tk.E, text='Trace logging', variable=self.trace_log, offvalue=1, onvalue=0)
+        self.check_log_trace.grid(column=1, row=4, sticky='nesw', padx=3, pady=3)
 
-        self.ent_log = ScrolledText.ScrolledText(self, state='disabled')
-        self.ent_log.grid(column=0, row=4, columnspan=2, sticky='nesw', padx=3, pady=3)
 
         #s = ttk.Style()
         #s.configure('Right.TCheckbutton', anchor='e')
         #self.check_log_trace = ttk.Checkbutton(self, style='Right.TCheckbutton', text='Trace logging', variable=self.trace_log)
-        self.check_log_trace = tk.Checkbutton(self, anchor=tk.E, text='Trace logging', variable=self.trace_log, offvalue=1, onvalue=0)
-        self.check_log_trace.grid(column=1, row=3, sticky='nesw', padx=3, pady=3)
-
         #self.btn_log_checkbox = ttk.Button(self, text='Low level logging: Currently False', command=self.handle_lowlevel_logging)
         #self.btn_log_checkbox.grid(column=1, row=3, sticky='nesw', padx=3, pady=3)
 
@@ -121,6 +156,10 @@ class BlocklyPropClient(tk.Tk):
 
         self.port.set(PORT)
         self.logger.info('Port number is: %s', self.port.get())
+
+        self.logfile.set(BlocklyLogger.path)
+        self.logger.info('Disk log file location is: %s', BlocklyLogger.path)
+
         self.server_process = None
 
         self.q = multiprocessing.Queue()
