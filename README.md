@@ -110,16 +110,16 @@ These steps need be performed frequently, as needed, after System Configuration 
     * Open a command window
     * Check out the needed branch from the _BlocklyPropClient_ repository
       * This can be done either 
-        * in _PyCharm's VCS > Git > Branches..._ menu, then select _origin/demo > Checkout as new local branch_ from _Remote Branches_ (or if _Local Branches_ section exists, you can select _{branch} -> origin/demo_ from _Local Branches_), then Exit PyCharm
+        * in _PyCharm's VCS > Git > Branches..._ menu, then select _origin/{branch} > Checkout as new local branch_ from _Remote Branches_ (or if _Local Branches_ section exists, you can select _{branch} -> origin/{branch}_ from _Local Branches_), then Exit PyCharm
         * in Git command line: 
-          * _$ cd C:\Users\{username}\PycharmProjects_
+          * _$ cd C:\Users\{username}\PycharmProjects\BlocklyPropClient_
           * _$ git checkout origin {branch}_
     * Run the build script (.windows.spec) from within the repository directory:
       * _$ c:\Python27\Scripts\pyinstaller BlocklyPropClient.windows.spec_
         * This builds and stores the application files in the __./dist__ subfolder which will be used by InnoSetup.
   * Package BlocklyPropClient
     * Run InnoSetup
-      * _File > Open_ the .spec file: _C:\Users\{username}\PycharmProjects\BlocklyPropClient\blocklypropclient-installer.iss_
+      * _File > Open_ the .spec file: _C:\Users\{username}\PycharmProjects\BlocklyPropClient\package\blocklypropclient-installer.iss_
       * Select _Build > Compile_
     * Now the installer executable will be in the __./dist__ subfolder.
 
