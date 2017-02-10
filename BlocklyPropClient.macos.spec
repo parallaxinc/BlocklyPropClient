@@ -11,7 +11,7 @@ exe = EXE(pyz,
           name='BlocklyPropClient',
           debug=False,
           strip=None,
-          upx=True,
+          upx=False,
           console=False,
           windowed=True
           )

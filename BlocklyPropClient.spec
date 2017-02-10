@@ -22,7 +22,7 @@ exe = EXE(pyz,
           name='BlocklyPropClient',
           debug=False,
           strip=False,
-          upx=True,
+          upx=False,
           console=True )
 coll = COLLECT(exe,
                a.binaries,
