@@ -5,22 +5,22 @@
 #
 # Requirements for this script are:
 #
+#   User must specify the application bundle name without extension: (example -a "MyApplication")
 #   User must specify the package version: (example: "-v 0.9.66")
 #   All other parameters are optional: (restart requirement, developer identity, is this a deployment package)
 #
-#   These files/folders must be copied to this script's directory:
-#      FTDIUSBSerialDriver.kext
-#      |APP_NAME|.app
-#   The FTDIUSBSerialDriver.kext should be downloaded from: http://www.ftdichip.com/Drivers/VCP.htm
-#      - select the currently supported Mac OS X VCP driver from that page (i.e. x64 (64-bit))
-#      - or use: http://www.ftdichip.com/Drivers/VCP/MacOSX/FTDIUSBSerialDriver_v2_2_18.dmg
-#      - install FTDI's driver package onto the development Mac OS X system
-#      - copy the FTDIUSBSerialDriver.kext from /Library/Extensions/ to the script's directory
-#   The |APP_NAME| release must be:
-#       - previously built with ./macrelease.sh script
-#       - optionally modified with ./macdeployqt_fix_frameworks.sh, to add Qt framework Info.plist files (if built with < Qt 5.4)
-#       - application-signed with ./macappcodesign.sh, to sign the app with an "identified developer" ID and checksum
-#       - copied from the /<project>/<appname>/ directory to the script's directory
+#   These files/folders must exist (in relation to this script's folder):
+#      ../drivers/FTDIUSBSerialDriver.kext
+#      ../dist/|APP_NAME|.app
+#   To update the driver, 
+#      - download from and install driver (from http://www.ftdichip.com/Drivers/VCP.htm)
+#        - select the currently supported Mac OS X VCP driver from that page (i.e. x64 (64-bit))
+#        - or use: http://www.ftdichip.com/Drivers/VCP/MacOSX/FTDIUSBSerialDriver_v2_3.dmg
+#        - install FTDI's driver package onto the development Mac OS X system
+#      - copy the FTDIUSBSerialDriver.kext from /Library/Extensions/ to the ../drivers/ folder
+#   The |APP_NAME|.app release must be:
+#       - digitally signed with ./macappcodesign.sh, to sign the app with an "identified developer" ID and checksum
+#       - stored in the ../dist/ folder
 #
 
 usage()
@@ -28,22 +28,30 @@ usage()
 cat << EOF
 usage: $0 options
 
-This script builds a signed SimpleIDE installation package.
+This script builds a signed installation package.
 
 OPTIONS:
     -h  show usage
+    -a  application bundle name
+        - example: -a "MyApplication"
     -r  require restart after installation (applies only if FTDIUSBSerialDriver is included)
     -f  include FTDIUSBSerialDriver in the package
     -s  developer identity certificate key
         - example: -s "Developer Identity" (default is "Developer ID Installer")
     -v  version
         - example: -v 0.9.66 (required parameter)
-    -d  use deployment identifier (default is: com.test.ParallaxInc, deploy is: com.Parallax.Inc)
+    -d  use deployment identifier (default is: com.test.ParallaxInc, deploy is: com.ParallaxInc.|APP_NAME|)
 
     example: ./macsignedpack.sh -r -f -s "Developer ID Installer" -v 0.9.66 -d
 
 EOF
 }
+
+#
+# Resource paths
+#
+RESOURCES="./mac-resources/"
+DISTRIBUTION="../dist/"
 
 #
 # Default installation locations
@@ -55,9 +63,6 @@ DEFAULT_APP_DIR="/Applications/"
 #
 # Default component names
 #
-APP_NAME=BlocklyPropClient
-APP_BUNDLE=${APP_NAME}.app
-
 FTDIDRIVER=FTDIUSBSerialDriver
 FTDIDRIVER_KEXT=${FTDIDRIVER}.kext
 
@@ -68,13 +73,9 @@ FTDIDRIVER_KEXT=${FTDIDRIVER}.kext
 DIST_DST=DistributionMOD.xml
 
 #
-# Location of the propside project files
-#
-APP_PROJ_DIR="../propside/"
-
-#
 # initialize input options with default values
 #
+APP_NAME=
 VERSION=
 IDENTITY="Developer ID Installer"
 REQUIRE_RESTART_TEXT="requireRestart"
@@ -90,6 +91,10 @@ do
     case $OPTION in
         h)
             usage; exit 1 ;;
+        a)
+            APP_NAME=$OPTARG
+            echo "packaging target: \"${DISTRIBUTION}${APP_NAME}.app\""
+            ;;           
         r)
             if [[ $OPTARG =~ ^[0-9]+$ ]]
             then
@@ -132,7 +137,7 @@ do
             ;;
         v)
             VERSION=$OPTARG
-            echo "overriding package version from the propside.pro project file with: \"${VERSION}\""
+            echo "applying version: \"${VERSION}\""
             ;;
         ?)
             usage; exit  ;;
@@ -140,27 +145,30 @@ do
 done
 
 #
-# If no app version was declared, extract it from the propside.pro file
+# Error if no application bundle name was declared
+#
+if [[ -z $APP_NAME ]]
+then
+    echo "[ERROR] no application bundle was declared."
+    echo
+    usage
+    exit 1
+fi
+
+#
+# Set bundle name
+#
+APP_BUNDLE=${APP_NAME}.app
+
+#
+# Error if no app version was declared
 #
 if [[ -z $VERSION ]]
 then
-#
-#   Attempt to extract app version from propside.pro project file
-#
-    if [[ -e ${APP_PROJ_DIR}propside.pro ]]
-    then
-        SEDCMD=`sed -n 's/VERSION=.*$/&/p' ${APP_PROJ_DIR}propside.pro | cut -d"=" -f3`
-        VERSION=`echo ${SEDCMD}`
-        VERSION=`echo ${VERSION} | sed 's/ /./g'`
-        VERSION=`echo ${VERSION} | sed 's/\r//g'`
-        echo "Extracted app version: ${VERSION} from the latest propside.pro file"
-    else
-        echo "[ERROR] no version option was declared and there is no propside.pro file to extract from"
-        echo "        Please verify that the ${APP_PROJ_DIR}propside.pro file exists and retry"
-        echo
-        usage
-        exit 1
-    fi
+    echo "[ERROR] no version option was declared."
+    echo
+    usage
+    exit 1
 fi
 
 #
@@ -180,19 +188,19 @@ fi
 # A properly signed app will contain a _CodeSignature directory and CodeResource file
 #
 echo "Validating application..."
-if [[ -e ${APP_BUNDLE}/Contents/_CodeSignature/CodeResources ]]
+if [[ -e ${DISTRIBUTION}${APP_BUNDLE}/Contents/_CodeSignature/CodeResources ]]
 then
     echo " found signed application bundle"
 #
 # How this works:
 # A single "-v" == "verify app signing", gives no result on valid app signing
 #
-    codesign -v ${APP_BUNDLE}
+    codesign -v ${DISTRIBUTION}${APP_BUNDLE}
     if [ "$?" != "0" ]; then
         echo " [Error] app sign validation failed!" 1>&2
         exit 1
     else
-        echo " verified ${APP_BUNDLE} signature"
+        echo " verified ${DISTRIBUTION}${APP_BUNDLE} signature"
     fi
 else
     echo " [Error] _CodeSignature/CodeResources missing from application bundle. Please read macsignedpack.sh comments"
@@ -242,13 +250,13 @@ echo "OPT: Developer certificate identity: \"${IDENTITY}\""
 if [[ $DEPLOY == true ]]
 then
     PARALLAX_IDENTIFIER=com.ParallaxInc
-#   Will get modified to: "com.ParallaxInc.SimpleIDE" below
+#   Will get modified to: "com.ParallaxInc.|APP_NAME|" below
     FTDI_IDENTIFIER=com.FTDI.driver
 #   Will get modified to: "com.FTDI.driver.FTDIUSBSerialDriver" below
     echo "OPT: Package CFBundleIdentifiers will be set for deployment"
 else
     PARALLAX_IDENTIFIER=com.test.ParallaxInc
-#   Will get modified to: "com.test.ParallaxInc.SimpleIDE" below
+#   Will get modified to: "com.test.ParallaxInc.|APP_NAME|" below
     FTDI_IDENTIFIER=com.test.FTDI.driver
 #   Will get modified to: "com.test.FTDI.driver.FTDIUSBSerialDriver" below
     echo "OPT: Package CFBundleIdentifiers will be set for testing"
@@ -268,45 +276,45 @@ then
     echo "OPT: FTDI kext packaging requested"
 #
 #   is the FTDI Driver kext available?
-    if [[ -e ${FTDIDRIVER_KEXT} ]]
+    if [[ -e ../drivers/${FTDIDRIVER_KEXT} ]]
     then
         echo "     found FTDI USB Serial Driver"
         DIST_SRC=DistributionFTDI.xml
 #
 #       build the FTDI Driver component package
         echo; echo "Building FTDI USB Driver package..."
-        pkgbuild    --root ${FTDIDRIVER_KEXT} \
+        pkgbuild    --root ../drivers/${FTDIDRIVER_KEXT} \
                     --identifier ${FTDI_IDENTIFIER}.${FTDIDRIVER} \
                     --timestamp \
                     --install-location ${FTDIDRIVER_DEST_DIR}${FTDIDRIVER_KEXT} \
                     --sign "$IDENTITY" \
                     --version ${VERSION} \
-                    FTDIUSBSerialDriver.pkg
+                    ${DISTRIBUTION}FTDIUSBSerialDriver.pkg
     else
         echo " [Error] FTDI USB Serial driver missing. Please read macsignedpack.sh comments."
         exit 1
     fi
 else
     echo "OPT: FTDI kext WILL NOT be installed by this package!"
-    DIST_SRC=DistributionSIDE.xml
+    DIST_SRC=Distribution.xml
 fi
 
 #
-# Build the SimpleIDE app component package
+# Build the application component package
 #
-echo; echo "Building SimpleIDE App package..."
-pkgbuild --root ${APP_BUNDLE} \
+echo; echo "Building Application package..."
+pkgbuild --root ${DISTRIBUTION}${APP_BUNDLE} \
 	--identifier ${PARALLAX_IDENTIFIER}.${APP_NAME} \
 	--timestamp \
 	--install-location ${DEFAULT_APP_DIR}${APP_BUNDLE} \
     --sign "$IDENTITY" \
 	--version ${VERSION} \
-    SimpleIDE.pkg
+    ${APP_NAME}.pkg
 
 #
 # Write a synthesized distribution xml directly (NO LONGER USED, BUT CAN PROVIDE A DISTRIBUTION XML FILE AS A TEMPLATE)
 #
-#productbuild --synthesize --sign "$IDENTITY" --timestamp=none --package SimpleIDE.pkg --package FTDIUSBSerialDriver.pkg ./${DIST_SRC}
+#productbuild --synthesize --sign "$IDENTITY" --timestamp=none --package ${APP_NAME}.pkg --package FTDIUSBSerialDriver.pkg ${RESOURCES}${DIST_SRC}
 #
 
 #
@@ -317,33 +325,33 @@ then
     if [[ ${RESTART} == true ]]
     then
 	echo "modifying distribution xml to require restart..."
-    sed "s/\"none\"\>FTDI/\"${REQUIRE_RESTART_TEXT}\"\>FTDI/g" ${DIST_SRC} > ./${DIST_DST}
+    sed "s/\"none\"\>FTDI/\"${REQUIRE_RESTART_TEXT}\"\>FTDI/g" ${RESOURCES}${DIST_SRC} > ${RESOURCES}${DIST_DST}
     else
-        cat ${DIST_SRC} > ./${DIST_DST}
+        cat ${RESOURCES}${DIST_SRC} > ${RESOURCES}${DIST_DST}
     fi
 else
-    cat ${DIST_SRC} > ./${DIST_DST}
+    cat ${RESOURCES}${DIST_SRC} > ${RESOURCES}${DIST_DST}
 fi
 
 #
-# Build the SimpleIDE Product Installation Package
+# Build the Product Installation Package
 #
 # note: $DIST_DST holds a copied or modified version of one of the 2 DistributionXXXX.xml files
 #       The $DIST_DST contains installation options & links to resources for the product package
 echo; echo "Building product package..."
-productbuild    --distribution ./${DIST_DST} \
-                --resources ./ \
+productbuild    --distribution ${RESOURCES}${DIST_DST} \
+                --resources ${RESOURCES} \
                 --timestamp \
                 --version $VERSION \
                 --package-path ./ \
                 --sign "$IDENTITY" \
-                ./SimpleIDE-${VERSION}-MacOS.pkg
+                ./${APP_NAME}-${VERSION}-MacOS.pkg
 
-if [[ -e ${DIST_DST} ]]
+if [[ -e ${RESOURCES}${DIST_DST} ]]
 then
     echo
     echo "cleaning up temporary files..."   
-    rm ${DIST_DST}
+    rm ${RESOURCES}${DIST_DST}
 fi
 
 echo; echo "done!"
