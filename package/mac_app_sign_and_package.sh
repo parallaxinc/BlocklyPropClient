@@ -25,13 +25,13 @@
 usage()
 {
 cat << EOF
-Usage: $0 options
+Usage: $0 OPTIONS
 
-This script builds a signed installation package.
+This script signs an application bundle and builds a signed installation package.
 
 OPTIONS:
     -h  show usage
-    -a  application bundle name
+    -a  (REQUIRED) application bundle name
         - example: -a "MyApplication"
     -r  require restart after installation (applies only if FTDIUSBSerialDriver is included)
     -f  include FTDIUSBSerialDriver in the package
@@ -39,11 +39,11 @@ OPTIONS:
         - example: -s "Developer Identity" (default is "Developer ID Application")
     -t  installer developer identity certificate key
         - example: -t "Developer Identity" (default is "Developer ID Installer")
-    -v  version
-        - example: -v 0.9.66 (required parameter)
+    -v  (REQUIRED) version
+        - example: -v 0.5.1
     -d  use deployment identifier (default is: com.test.ParallaxInc, deploy is: com.ParallaxInc.|APP_NAME|)
 
-    example: ./macsignedpack.sh -r -f -s "Developer ID Installer" -v 0.9.66 -d
+    example: ./macsignedpack.sh —a "MyApplication" r -f -s "Developer ID Application" -t "Developer ID Installer" -v 0.5.1 -d
 
 EOF
 }
@@ -240,7 +240,7 @@ then
     #
     # Found bundle
     #
-    if [[ -e ${DISTRIBUTION}${APP_BUNDLE}/Contents/_CodeSignature/CodeResources ]]
+    if [[ -e ${DISTRIBUTION}${APP_BUNDLE}/_CodeSignature/CodeResources ]]
     then
         #
         # Found code signature, now we'll check validity
@@ -258,8 +258,6 @@ then
         exit 1
     fi
 fi
-
-exit
 
 echo
 
@@ -282,19 +280,19 @@ then
     #   Will get modified to: "com.ParallaxInc.|APP_NAME|" below
     FTDI_IDENTIFIER=com.FTDI.driver
     #   Will get modified to: "com.FTDI.driver.FTDIUSBSerialDriver" below
-    echo "OPT: Package CFBundleIdentifiers will be set for deployment"
+    echo "  Package CFBundleIdentifiers will be set for deployment"
 else
     PARALLAX_IDENTIFIER=com.test.ParallaxInc
     #   Will get modified to: "com.test.ParallaxInc.|APP_NAME|" below
     FTDI_IDENTIFIER=com.test.FTDI.driver
     #   Will get modified to: "com.test.FTDI.driver.FTDIUSBSerialDriver" below
-    echo "OPT: Package CFBundleIdentifiers will be set for testing"
+    echo "  Package CFBundleIdentifiers will be set for testing"
 fi
 
 #
-# touch the entire content of the current directory to set most-recent mod dates
+# touch the entire bundle directory to set most-recent mod dates
 #
-touch *
+touch ${DISTRIBUTION}*
 
 #
 # Build the FTDIUSBSerialDriver.kext component package
@@ -339,6 +337,8 @@ pkgbuild --root ${DISTRIBUTION}${APP_BUNDLE} \
          --sign "$INST_IDENTITY" \
          --version ${VERSION} \
          ${APP_NAME}.pkg
+
+exit
 
 #
 # Write a synthesized distribution xml directly (NO LONGER USED, BUT CAN PROVIDE A DISTRIBUTION XML FILE AS A TEMPLATE)
