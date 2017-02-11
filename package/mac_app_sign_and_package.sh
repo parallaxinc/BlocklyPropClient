@@ -1,26 +1,25 @@
 #!/bin/sh --
 #
-# The purpose of this script is to create a signed Mac OS X deployment package
-# The package will be created as ./|APP_NAME|-|VERSION|-MacOS.pkg
+# This script signs and packages a Mac OS X application bundle.
+# The final package will be created as ../dist/|APP_NAME|-|VERSION|-setup-MacOS.pkg.
 #
 # Requirements for this script are:
 #
 #   User must specify the application bundle name without extension: (example -a "MyApplication")
 #   User must specify the package version: (example: "-v 0.9.66")
-#   All other parameters are optional: (restart requirement, developer identity, is this a deployment package)
+#   All other parameters are optional: (FTDI driver installer, restart requirement, developer identities, deploy package request)
 #
 #   These files/folders must exist (in relation to this script's folder):
 #      ../drivers/FTDIUSBSerialDriver.kext
 #      ../dist/|APP_NAME|.app
 #   To update the driver, 
-#      - download from and install driver (from http://www.ftdichip.com/Drivers/VCP.htm)
+#      - download and install driver (from http://www.ftdichip.com/Drivers/VCP.htm)
 #        - select the currently supported Mac OS X VCP driver from that page (i.e. x64 (64-bit))
 #        - or use: http://www.ftdichip.com/Drivers/VCP/MacOSX/FTDIUSBSerialDriver_v2_3.dmg
 #        - install FTDI's driver package onto the development Mac OS X system
 #      - copy the FTDIUSBSerialDriver.kext from /Library/Extensions/ to the ../drivers/ folder
-#   The |APP_NAME|.app release must be:
-#       - digitally signed with ./macappcodesign.sh, to sign the app with an "identified developer" ID and checksum
-#       - stored in the ../dist/ folder
+#   The ../dist/|APP_NAME|.app release will be:
+#       - digitally signed with an "identified developer" ID and checksum
 #
 
 usage()
@@ -36,8 +35,10 @@ OPTIONS:
         - example: -a "MyApplication"
     -r  require restart after installation (applies only if FTDIUSBSerialDriver is included)
     -f  include FTDIUSBSerialDriver in the package
-    -s  developer identity certificate key
-        - example: -s "Developer Identity" (default is "Developer ID Installer")
+    -s  application developer identity certificate key
+        - example: -s "Developer Identity" (default is "Developer ID Application")
+    -t  installer developer identity certificate key
+        - example: -t "Developer Identity" (default is "Developer ID Installer")
     -v  version
         - example: -v 0.9.66 (required parameter)
     -d  use deployment identifier (default is: com.test.ParallaxInc, deploy is: com.ParallaxInc.|APP_NAME|)
@@ -77,7 +78,8 @@ DIST_DST=DistributionMOD.xml
 #
 APP_NAME=
 VERSION=
-IDENTITY="Developer ID Installer"
+APP_IDENTITY="Developer ID Application"
+INST_IDENTITY="Developer ID Installer"
 REQUIRE_RESTART_TEXT="requireRestart"
 RESTART=false
 DEPLOY=false
@@ -86,7 +88,7 @@ FTDI=false
 #
 # get parms as flags or as requiring arguments
 #
-while getopts "ha:rfs:dv:" OPTION
+while getopts "ha:rfs:t:dv:" OPTION
 do
     case $OPTION in
         h)
@@ -119,7 +121,10 @@ do
             fi
             ;;
         s)
-            IDENTITY=$OPTARG
+            APP_IDENTITY=$OPTARG
+            ;;
+        t)
+            INST_IDENTITY=$OPTARG
             ;;
         d)
             if [[ $OPTARG =~ ^[0-9]+$ ]]
@@ -180,16 +185,56 @@ then
     exit 1
 fi
 
+#
 # Show Info
+#
 echo "[INFO] Processing target: \"${DISTRIBUTION}${APP_NAME}.app\""
 echo "[INFO] As build version: \"${VERSION}\""
-echo "[INFO] Using identity: \"${IDENTITY}\""
+echo "[INFO] Using application identity: \"${APP_IDENTITY}\""
+echo "[INFO] Using installer identity: \"${INST_IDENTITY}\""
+
+#
+# Use security utility to determine if the developer installation identity is valid
+#
+echo "Validating developer identity certificates..."
+APP_SECUREID=`security find-certificate -c "$APP_IDENTITY" | grep labl`
+INST_SECUREID=`security find-certificate -c "$INST_IDENTITY" | grep labl`
+if [[ -n ${APP_SECUREID} ]]
+then
+    echo "  Found Application Identity: \"${APP_IDENTITY}\""
+else
+    echo "  [Error] Application Identity: \"${APP_IDENTITY}\" does not exist!"
+    echo "          Use Keychain Access app to verify that you are using an authorized developer installation certificate..."
+    echo "          i.e. search within Login Keychain 'My Certificates' Category for certificate, for example: 'Developer ID Application'"
+    echo
+    exit 1
+fi
+if [[ -n ${INST_SECUREID} ]]
+then
+    echo "  Found Installer Identity: \"${INST_IDENTITY}\""
+else
+    echo "  [Error] Installer Identity: \"${INST_IDENTITY}\" does not exist!"
+    echo "          Use Keychain Access app to verify that you are using an authorized developer installation certificate..."
+    echo "          i.e. search within Login Keychain 'My Certificates' Category for certificate, for example: 'Developer ID Installer'."
+    echo
+    exit 1
+fi
+
+#
+# Attempt to deeply codesign the app bundle
+#
+echo "Code signing the application bundle @: ${DISTRIBUTION}${APP_BUNDLE} for identity: \"${APP_IDENTITY}\""
+codesign -s "$APP_IDENTITY" --deep -f -v ${DISTRIBUTION}${APP_BUNDLE}
+if [ "$?" != "0" ]; then
+    echo "[Error] Codesigning the application bundle failed!" 1>&2
+    exit 1    
+fi
 
 #
 # Verify that app is code-signed
 # A properly signed app will contain a _CodeSignature directory and CodeResource file
 #
-echo "Validating application..."
+echo "Validating application signature..."
 if [[ -e ${DISTRIBUTION}${APP_BUNDLE} ]]
 then
     #
@@ -216,21 +261,6 @@ fi
 
 exit
 
-#
-# Use security utility to determine if the developer installation identity is valid
-#
-echo "Validating developer identity certificate..."
-SECUREID=`security find-certificate -c "$IDENTITY" | grep labl`
-if [[ -n ${SECUREID} ]]
-then
-    echo "  Found identity: \"${IDENTITY}\""
-else
-    echo "  [Error] Identity: \"${IDENTITY}\" does not exist!"
-    echo "          Use Keychain Access app to verify that you are using an authorized developer installation certificate..."
-    echo "          i.e. search within Login Keychain 'My Certificates' Category for 'Developer ID Installer' certificate."
-    echo
-    exit 1
-fi
 echo
 
 #
@@ -286,7 +316,7 @@ then
                     --identifier ${FTDI_IDENTIFIER}.${FTDIDRIVER} \
                     --timestamp \
                     --install-location ${FTDIDRIVER_DEST_DIR}${FTDIDRIVER_KEXT} \
-                    --sign "$IDENTITY" \
+                    --sign "$INST_IDENTITY" \
                     --version ${VERSION} \
                     ${DISTRIBUTION}FTDIUSBSerialDriver.pkg
     else
@@ -303,17 +333,17 @@ fi
 #
 echo; echo "Building Application package..."
 pkgbuild --root ${DISTRIBUTION}${APP_BUNDLE} \
-	 --identifier ${PARALLAX_IDENTIFIER}.${APP_NAME} \ 
-	 --timestamp \
-	 --install-location ${DEFAULT_APP_DIR}${APP_BUNDLE} \
-         --sign "$IDENTITY" \
-	 --version ${VERSION} \
+         --identifier ${PARALLAX_IDENTIFIER}.${APP_NAME} \ 
+         --timestamp \
+         --install-location ${DEFAULT_APP_DIR}${APP_BUNDLE} \
+         --sign "$INST_IDENTITY" \
+         --version ${VERSION} \
          ${APP_NAME}.pkg
 
 #
 # Write a synthesized distribution xml directly (NO LONGER USED, BUT CAN PROVIDE A DISTRIBUTION XML FILE AS A TEMPLATE)
 #
-#productbuild --synthesize --sign "$IDENTITY" --timestamp=none --package ${APP_NAME}.pkg --package FTDIUSBSerialDriver.pkg ${RESOURCES}${DIST_SRC}
+#productbuild --synthesize --sign "$INST_IDENTITY" --timestamp=none --package ${APP_NAME}.pkg --package FTDIUSBSerialDriver.pkg ${RESOURCES}${DIST_SRC}
 #
 
 #
@@ -343,8 +373,8 @@ productbuild    --distribution ${RESOURCES}${DIST_DST} \
                 --timestamp \
                 --version $VERSION \
                 --package-path ./ \
-                --sign "$IDENTITY" \
-                ./${APP_NAME}-${VERSION}-MacOS.pkg
+                --sign "$INST_IDENTITY" \
+                ./${APP_NAME}-${VERSION}-setup-MacOS.pkg
 
 if [[ -e ${RESOURCES}${DIST_DST} ]]
 then
