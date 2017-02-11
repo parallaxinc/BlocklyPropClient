@@ -26,7 +26,7 @@
 usage()
 {
 cat << EOF
-usage: $0 options
+Usage: $0 options
 
 This script builds a signed installation package.
 
@@ -86,14 +86,13 @@ FTDI=false
 #
 # get parms as flags or as requiring arguments
 #
-while getopts "hrfs:dv:" OPTION
+while getopts "ha:rfs:dv:" OPTION
 do
     case $OPTION in
         h)
             usage; exit 1 ;;
         a)
             APP_NAME=$OPTARG
-            echo "packaging target: \"${DISTRIBUTION}${APP_NAME}.app\""
             ;;           
         r)
             if [[ $OPTARG =~ ^[0-9]+$ ]]
@@ -121,7 +120,6 @@ do
             ;;
         s)
             IDENTITY=$OPTARG
-            echo "overriding Identity default with: \"${IDENTITY}\""
             ;;
         d)
             if [[ $OPTARG =~ ^[0-9]+$ ]]
@@ -137,19 +135,19 @@ do
             ;;
         v)
             VERSION=$OPTARG
-            echo "applying version: \"${VERSION}\""
             ;;
         ?)
+            echo "[HALT] Misconfigured options - see usage notes"
             usage; exit  ;;
     esac
 done
 
 #
-# Error if no application bundle name was declared
+# Error if no application bundle name (-a bundle) was declared
 #
 if [[ -z $APP_NAME ]]
 then
-    echo "[ERROR] no application bundle was declared."
+    echo "[HALT] No application bundle was declared - see usage notes for -a."
     echo
     usage
     exit 1
@@ -161,51 +159,62 @@ fi
 APP_BUNDLE=${APP_NAME}.app
 
 #
-# Error if no app version was declared
+# Error if no version (-v) option declared
 #
 if [[ -z $VERSION ]]
 then
-    echo "[ERROR] no version option was declared."
+    echo "[HALT] No version option was declared - see usage notes for -v."
     echo
     usage
     exit 1
 fi
 
 #
-# Validate requirements
+# Error if no version string declared
 #
 if [ ${VERSION}X == X ]
 then
-    echo "Usage: $0 version"
-    echo "$0 0.9.66"
+    echo "[HALT] No version string was declared - see usage notes for -v."
+    echo
+    usage
     exit 1
-else
-    echo "Application bundle code-signed package build..."
 fi
+
+# Show Info
+echo "[INFO] Processing target: \"${DISTRIBUTION}${APP_NAME}.app\""
+echo "[INFO] As build version: \"${VERSION}\""
+echo "[INFO] Using identity: \"${IDENTITY}\""
 
 #
 # Verify that app is code-signed
 # A properly signed app will contain a _CodeSignature directory and CodeResource file
 #
 echo "Validating application..."
-if [[ -e ${DISTRIBUTION}${APP_BUNDLE}/Contents/_CodeSignature/CodeResources ]]
+if [[ -e ${DISTRIBUTION}${APP_BUNDLE} ]]
 then
-    echo " found signed application bundle"
-#
-# How this works:
-# A single "-v" == "verify app signing", gives no result on valid app signing
-#
-    codesign -v ${DISTRIBUTION}${APP_BUNDLE}
-    if [ "$?" != "0" ]; then
-        echo " [Error] app sign validation failed!" 1>&2
-        exit 1
+    #
+    # Found bundle
+    #
+    if [[ -e ${DISTRIBUTION}${APP_BUNDLE}/Contents/_CodeSignature/CodeResources ]]
+    then
+        #
+        # Found code signature, now we'll check validity
+        # A single "-v" == "verify app signing", gives no result on valid app signing 
+        #
+        codesign -v ${DISTRIBUTION}${APP_BUNDLE}
+        if [ "$?" != "0" ]; then
+            echo "  [Error] Application signature is invalid!" 1>&2
+            exit 1
+        else
+            echo "  Verified ${DISTRIBUTION}${APP_BUNDLE} signature"
+        fi
     else
-        echo " verified ${DISTRIBUTION}${APP_BUNDLE} signature"
+        echo "  [Error] Application bundle is not signed."
+        exit 1
     fi
-else
-    echo " [Error] _CodeSignature/CodeResources missing from application bundle. Please read macsignedpack.sh comments"
-    exit 1
 fi
+
+exit
 
 #
 # Use security utility to determine if the developer installation identity is valid
@@ -214,11 +223,11 @@ echo "Validating developer identity certificate..."
 SECUREID=`security find-certificate -c "$IDENTITY" | grep labl`
 if [[ -n ${SECUREID} ]]
 then
-    echo " found identity: \"${IDENTITY}\""
+    echo "  Found identity: \"${IDENTITY}\""
 else
-    echo " [Error] Identity: \"${IDENTITY}\" does not exist!"
-    echo "         Use Keychain Access app to verify that you are using an authorized developer installation certificate..."
-    echo "         i.e. search within Login Keychain 'My Certificates' Category for 'Developer ID Installer' certificate."
+    echo "  [Error] Identity: \"${IDENTITY}\" does not exist!"
+    echo "          Use Keychain Access app to verify that you are using an authorized developer installation certificate..."
+    echo "          i.e. search within Login Keychain 'My Certificates' Category for 'Developer ID Installer' certificate."
     echo
     exit 1
 fi
@@ -229,20 +238,10 @@ echo
 #
 if [[ $RESTART == true ]]
 then
-    echo "OPT: Restart required after installation"
+    echo "[INFO] Restart required after installation"
 else
-    echo "OPT: Restart NOT required after installation"
+    echo "[INFO] Restart NOT required after installation"
 fi
-
-#
-# Display version
-#
-echo "OPT: Package version: ${VERSION}"
-
-#
-# Display identity
-#
-echo "OPT: Developer certificate identity: \"${IDENTITY}\""
 
 #
 # Developer PARALLAX_IDENTIFIER & FTDI_IDENTIFIER (package can be for testing or deployment)
@@ -250,15 +249,15 @@ echo "OPT: Developer certificate identity: \"${IDENTITY}\""
 if [[ $DEPLOY == true ]]
 then
     PARALLAX_IDENTIFIER=com.ParallaxInc
-#   Will get modified to: "com.ParallaxInc.|APP_NAME|" below
+    #   Will get modified to: "com.ParallaxInc.|APP_NAME|" below
     FTDI_IDENTIFIER=com.FTDI.driver
-#   Will get modified to: "com.FTDI.driver.FTDIUSBSerialDriver" below
+    #   Will get modified to: "com.FTDI.driver.FTDIUSBSerialDriver" below
     echo "OPT: Package CFBundleIdentifiers will be set for deployment"
 else
     PARALLAX_IDENTIFIER=com.test.ParallaxInc
-#   Will get modified to: "com.test.ParallaxInc.|APP_NAME|" below
+    #   Will get modified to: "com.test.ParallaxInc.|APP_NAME|" below
     FTDI_IDENTIFIER=com.test.FTDI.driver
-#   Will get modified to: "com.test.FTDI.driver.FTDIUSBSerialDriver" below
+    #   Will get modified to: "com.test.FTDI.driver.FTDIUSBSerialDriver" below
     echo "OPT: Package CFBundleIdentifiers will be set for testing"
 fi
 
@@ -273,16 +272,16 @@ touch *
 # Include FTDI in the Installer package?
 if [[ ${FTDI} == true ]]
 then
-    echo "OPT: FTDI kext packaging requested"
+    echo "[INFO] FTDI kext WILL BE included in this packag"
 #
 #   is the FTDI Driver kext available?
     if [[ -e ../drivers/${FTDIDRIVER_KEXT} ]]
     then
-        echo "     found FTDI USB Serial Driver"
+        echo "  Found FTDI USB Serial Driver"
         DIST_SRC=DistributionFTDI.xml
 #
 #       build the FTDI Driver component package
-        echo; echo "Building FTDI USB Driver package..."
+        echo; echo "  Building FTDI USB Driver package..."
         pkgbuild    --root ../drivers/${FTDIDRIVER_KEXT} \
                     --identifier ${FTDI_IDENTIFIER}.${FTDIDRIVER} \
                     --timestamp \
@@ -291,11 +290,11 @@ then
                     --version ${VERSION} \
                     ${DISTRIBUTION}FTDIUSBSerialDriver.pkg
     else
-        echo " [Error] FTDI USB Serial driver missing. Please read macsignedpack.sh comments."
+        echo "  [Error] FTDI USB Serial driver missing. Please read $0 comments."
         exit 1
     fi
 else
-    echo "OPT: FTDI kext WILL NOT be installed by this package!"
+    echo "[INFO] FTDI kext WILL NOT BE installed by this package"
     DIST_SRC=Distribution.xml
 fi
 
@@ -304,12 +303,12 @@ fi
 #
 echo; echo "Building Application package..."
 pkgbuild --root ${DISTRIBUTION}${APP_BUNDLE} \
-	--identifier ${PARALLAX_IDENTIFIER}.${APP_NAME} \
-	--timestamp \
-	--install-location ${DEFAULT_APP_DIR}${APP_BUNDLE} \
-    --sign "$IDENTITY" \
-	--version ${VERSION} \
-    ${APP_NAME}.pkg
+	 --identifier ${PARALLAX_IDENTIFIER}.${APP_NAME} \ 
+	 --timestamp \
+	 --install-location ${DEFAULT_APP_DIR}${APP_BUNDLE} \
+         --sign "$IDENTITY" \
+	 --version ${VERSION} \
+         ${APP_NAME}.pkg
 
 #
 # Write a synthesized distribution xml directly (NO LONGER USED, BUT CAN PROVIDE A DISTRIBUTION XML FILE AS A TEMPLATE)
@@ -324,8 +323,8 @@ if [[ ${FTDI} == true ]]
 then
     if [[ ${RESTART} == true ]]
     then
-	echo "modifying distribution xml to require restart..."
-    sed "s/\"none\"\>FTDI/\"${REQUIRE_RESTART_TEXT}\"\>FTDI/g" ${RESOURCES}${DIST_SRC} > ${RESOURCES}${DIST_DST}
+	echo "Modifying distribution xml to require restart..."
+        sed "s/\"none\"\>FTDI/\"${REQUIRE_RESTART_TEXT}\"\>FTDI/g" ${RESOURCES}${DIST_SRC} > ${RESOURCES}${DIST_DST}
     else
         cat ${RESOURCES}${DIST_SRC} > ${RESOURCES}${DIST_DST}
     fi
@@ -350,9 +349,9 @@ productbuild    --distribution ${RESOURCES}${DIST_DST} \
 if [[ -e ${RESOURCES}${DIST_DST} ]]
 then
     echo
-    echo "cleaning up temporary files..."   
+    echo "Cleaning up temporary files..."   
     rm ${RESOURCES}${DIST_DST}
 fi
 
-echo; echo "done!"
+echo; echo "Done!"
 exit 0
