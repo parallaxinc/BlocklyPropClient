@@ -380,7 +380,7 @@ productbuild    --distribution ${RESOURCES}${DIST_DST} \
                 --resources ${RESOURCES} \
                 --timestamp \
                 --version $VERSION \
-                --package-path ./ \
+                --package-path ${DISTRIBUTION} \
                 --sign "$INST_IDENTITY" \
                 ${DISTRIBUTION}${APP_NAME}-${VERSION}-setup-MacOS.pkg
 
