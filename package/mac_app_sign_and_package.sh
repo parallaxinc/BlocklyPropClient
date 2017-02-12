@@ -200,7 +200,7 @@ else
 fi
 if [[ ${FTDI} == true ]]
 then
-    echo "[INFO] FTDI kext WILL BE installed by this package”
+    echo "[INFO] FTDI kext WILL BE installed by this package"
 else
     echo "[INFO] FTDI kext WILL NOT BE installed by this package"
 fi
