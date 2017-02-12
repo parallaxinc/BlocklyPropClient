@@ -236,15 +236,19 @@ else
     exit 1
 fi
 
+echo
+
 #
 # Attempt to deeply codesign the app bundle
 #
-echo "Code signing the application bundle @: ${DISTRIBUTION}${APP_BUNDLE} for identity: \"${APP_IDENTITY}\""
+echo "Code signing the application bundle: ${DISTRIBUTION}${APP_BUNDLE} with identity: \"${APP_IDENTITY}\""
 codesign -s "$APP_IDENTITY" --deep -f -v ${DISTRIBUTION}${APP_BUNDLE}
 if [ "$?" != "0" ]; then
     echo "[Error] Codesigning the application bundle failed!" 1>&2
     exit 1    
 fi
+
+echo
 
 #
 # Verify that app is code-signed
@@ -295,6 +299,8 @@ else
     echo "Package’s CFBundleIdentifiers will be set for testing"
 fi
 
+echo
+
 #
 # touch the entire bundle directory to set most-recent mod dates
 #
@@ -308,7 +314,7 @@ then
 #   is the FTDI Driver kext available?
     if [[ -e ../drivers/${FTDIDRIVER_KEXT} ]]
     then
-        echo "Found FTDI USB Serial Driver"
+        echo "Found FTDI USB Serial Driver kext"
         DIST_SRC=DistributionFTDI.xml
 #
 #       build the FTDI Driver component package
@@ -321,24 +327,26 @@ then
                     --version ${VERSION} \
                     ${DISTRIBUTION}FTDIUSBSerialDriver.pkg
     else
-        echo "[Error] FTDI USB Serial driver missing. Please read $0 comments."
+        echo "[Error] FTDI USB Serial Driver kext is missing. Please read $0 comments."
         exit 1
     fi
 else
     DIST_SRC=Distribution.xml
 fi
 
+echo
+
 #
 # Build the application component package
 #
-echo; echo "Building Application package..."
+echo "Building application package..."
 pkgbuild --root ${DISTRIBUTION}${APP_BUNDLE} \
          --identifier ${PARALLAX_IDENTIFIER}.${APP_NAME} \
          --timestamp \
          --install-location ${DEFAULT_APP_DIR}${APP_BUNDLE} \
          --sign "$INST_IDENTITY" \
          --version ${VERSION} \
-         ${APP_NAME}.pkg
+         ${DISTRIBUTION}${APP_NAME}.pkg
 
 #
 # Write a synthesized distribution xml directly (NO LONGER USED, BUT CAN PROVIDE A DISTRIBUTION XML FILE AS A TEMPLATE)
@@ -362,26 +370,30 @@ else
     cat ${RESOURCES}${DIST_SRC} > ${RESOURCES}${DIST_DST}
 fi
 
+echo 
+
 #
 # Build the Product Installation Package
 #
 # note: $DIST_DST holds a copied or modified version of one of the 2 DistributionXXXX.xml files
 #       The $DIST_DST contains installation options & links to resources for the product package
-echo; echo "Building Installation package..."
+echo "Building installation package..."
 productbuild    --distribution ${RESOURCES}${DIST_DST} \
                 --resources ${RESOURCES} \
                 --timestamp \
                 --version $VERSION \
                 --package-path ./ \
                 --sign "$INST_IDENTITY" \
-                ./${APP_NAME}-${VERSION}-setup-MacOS.pkg
+                ${DISTRIBUTION}${APP_NAME}-${VERSION}-setup-MacOS.pkg
+
+echo
 
 if [[ -e ${RESOURCES}${DIST_DST} ]]
 then
-    echo
     echo "Cleaning up temporary files..."   
     rm ${RESOURCES}${DIST_DST}
 fi
 
-echo; echo "Done!"
+echo
+echo "Done!"
 exit 0
