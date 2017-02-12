@@ -6,20 +6,24 @@
 # Requirements for this script are:
 #
 #   User must specify the application bundle name without extension: (example -a "MyApplication")
-#   User must specify the package version: (example: "-v 0.9.66")
+#     IMPORTANT: Application bundle must exist in folder noted below
+#   User must specify the package version: (example: "-v 1.0.56")
+#   
 #   All other parameters are optional: (FTDI driver installer, restart requirement, developer identities, deploy package request)
 #
-#   These files/folders must exist (in relation to this script's folder):
+#   These files and folders must exist in the paths show below (in relation to this script's folder):
 #      ../drivers/FTDIUSBSerialDriver.kext
-#      ../dist/|APP_NAME|.app
+#      ../dist/|application_bundle_name|.app
+#
 #   To update the driver, 
 #      - download and install driver (from http://www.ftdichip.com/Drivers/VCP.htm)
 #        - select the currently supported Mac OS X VCP driver from that page (i.e. x64 (64-bit))
 #        - or use: http://www.ftdichip.com/Drivers/VCP/MacOSX/FTDIUSBSerialDriver_v2_3.dmg
 #        - install FTDI's driver package onto the development Mac OS X system
 #      - copy the FTDIUSBSerialDriver.kext from /Library/Extensions/ to the ../drivers/ folder
-#   The ../dist/|APP_NAME|.app release will be:
-#       - digitally signed with an "identified developer" ID and checksum
+#
+#   The ../dist/|application_bundle_name|.app will be modified by this script to digitally sign it with the default or optional
+#       application developer identity certificate
 #
 
 usage()
