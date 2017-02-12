@@ -188,6 +188,7 @@ fi
 #
 # Show Info
 #
+echo
 echo "----------------RECIPE----------------"
 echo "* Processing target: \"${DISTRIBUTION}${APP_NAME}.app\""
 echo "* As build version: \"${VERSION}\""
@@ -299,8 +300,6 @@ else
     echo "Package’s CFBundleIdentifiers will be set for testing"
 fi
 
-echo
-
 #
 # touch the entire bundle directory to set most-recent mod dates
 #
@@ -314,7 +313,7 @@ then
 #   is the FTDI Driver kext available?
     if [[ -e ../drivers/${FTDIDRIVER_KEXT} ]]
     then
-        echo "Found FTDI USB Serial Driver kext"
+        echo; echo "Found FTDI USB Serial Driver kext"
         DIST_SRC=DistributionFTDI.xml
 #
 #       build the FTDI Driver component package
@@ -361,7 +360,7 @@ if [[ ${FTDI} == true ]]
 then
     if [[ ${RESTART} == true ]]
     then
-	echo "Modifying distribution xml to require restart..."
+	echo; echo "Modifying distribution xml to require restart..."
         sed "s/\"none\"\>FTDI/\"${REQUIRE_RESTART_TEXT}\"\>FTDI/g" ${RESOURCES}${DIST_SRC} > ${RESOURCES}${DIST_DST}
     else
         cat ${RESOURCES}${DIST_SRC} > ${RESOURCES}${DIST_DST}
