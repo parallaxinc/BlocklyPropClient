@@ -192,6 +192,18 @@ echo "[INFO] Processing target: \"${DISTRIBUTION}${APP_NAME}.app\""
 echo "[INFO] As build version: \"${VERSION}\""
 echo "[INFO] Using application identity: \"${APP_IDENTITY}\""
 echo "[INFO] Using installer identity: \"${INST_IDENTITY}\""
+if [[ $RESTART == true ]]
+then
+    echo "[INFO] Restart required after installation"
+else
+    echo "[INFO] Restart NOT required after installation"
+fi
+if [[ ${FTDI} == true ]]
+then
+    echo "[INFO] FTDI kext WILL BE installed by this package”
+else
+    echo "[INFO] FTDI kext WILL NOT BE installed by this package"
+fi
 
 #
 # Use security utility to determine if the developer installation identity is valid
@@ -262,16 +274,6 @@ fi
 echo
 
 #
-# Does the installation require a restart?
-#
-if [[ $RESTART == true ]]
-then
-    echo "[INFO] Restart required after installation"
-else
-    echo "[INFO] Restart NOT required after installation"
-fi
-
-#
 # Developer PARALLAX_IDENTIFIER & FTDI_IDENTIFIER (package can be for testing or deployment)
 #
 if [[ $DEPLOY == true ]]
@@ -280,13 +282,13 @@ then
     #   Will get modified to: "com.ParallaxInc.|APP_NAME|" below
     FTDI_IDENTIFIER=com.FTDI.driver
     #   Will get modified to: "com.FTDI.driver.FTDIUSBSerialDriver" below
-    echo "  Package CFBundleIdentifiers will be set for deployment"
+    echo "Package’s CFBundleIdentifiers will be set for deployment"
 else
     PARALLAX_IDENTIFIER=com.test.ParallaxInc
     #   Will get modified to: "com.test.ParallaxInc.|APP_NAME|" below
     FTDI_IDENTIFIER=com.test.FTDI.driver
     #   Will get modified to: "com.test.FTDI.driver.FTDIUSBSerialDriver" below
-    echo "  Package CFBundleIdentifiers will be set for testing"
+    echo "Package’s CFBundleIdentifiers will be set for testing"
 fi
 
 #
@@ -295,21 +297,18 @@ fi
 touch ${DISTRIBUTION}*
 
 #
-# Build the FTDIUSBSerialDriver.kext component package
+# If necessary, build the FTDIUSBSerialDriver.kext component package
 #
-# Include FTDI in the Installer package?
 if [[ ${FTDI} == true ]]
 then
-    echo "[INFO] FTDI kext WILL BE included in this packag"
-#
 #   is the FTDI Driver kext available?
     if [[ -e ../drivers/${FTDIDRIVER_KEXT} ]]
     then
-        echo "  Found FTDI USB Serial Driver"
+        echo "Found FTDI USB Serial Driver"
         DIST_SRC=DistributionFTDI.xml
 #
 #       build the FTDI Driver component package
-        echo; echo "  Building FTDI USB Driver package..."
+        echo; echo "Building FTDI USB Driver package..."
         pkgbuild    --root ../drivers/${FTDIDRIVER_KEXT} \
                     --identifier ${FTDI_IDENTIFIER}.${FTDIDRIVER} \
                     --timestamp \
@@ -318,11 +317,10 @@ then
                     --version ${VERSION} \
                     ${DISTRIBUTION}FTDIUSBSerialDriver.pkg
     else
-        echo "  [Error] FTDI USB Serial driver missing. Please read $0 comments."
+        echo "[Error] FTDI USB Serial driver missing. Please read $0 comments."
         exit 1
     fi
 else
-    echo "[INFO] FTDI kext WILL NOT BE installed by this package"
     DIST_SRC=Distribution.xml
 fi
 
@@ -331,14 +329,12 @@ fi
 #
 echo; echo "Building Application package..."
 pkgbuild --root ${DISTRIBUTION}${APP_BUNDLE} \
-         --identifier ${PARALLAX_IDENTIFIER}.${APP_NAME} \ 
+         --identifier ${PARALLAX_IDENTIFIER}.${APP_NAME} \
          --timestamp \
          --install-location ${DEFAULT_APP_DIR}${APP_BUNDLE} \
          --sign "$INST_IDENTITY" \
          --version ${VERSION} \
          ${APP_NAME}.pkg
-
-exit
 
 #
 # Write a synthesized distribution xml directly (NO LONGER USED, BUT CAN PROVIDE A DISTRIBUTION XML FILE AS A TEMPLATE)
@@ -367,7 +363,7 @@ fi
 #
 # note: $DIST_DST holds a copied or modified version of one of the 2 DistributionXXXX.xml files
 #       The $DIST_DST contains installation options & links to resources for the product package
-echo; echo "Building product package..."
+echo; echo "Building Installation package..."
 productbuild    --distribution ${RESOURCES}${DIST_DST} \
                 --resources ${RESOURCES} \
                 --timestamp \
