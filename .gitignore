@@ -1,6 +1,11 @@
+####################
+## BlocklyPropClient
+####################
 access.txt
 venv/
 VPython/
+*.app
+*.pkg
 
 #################
 ## Eclipse
