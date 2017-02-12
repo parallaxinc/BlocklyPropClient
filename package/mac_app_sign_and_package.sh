@@ -33,17 +33,17 @@ OPTIONS:
     -h  show usage
     -a  (REQUIRED) application bundle name
         - example: -a "MyApplication"
+    -v  (REQUIRED) version
+        - example: -v 0.5.1
     -r  require restart after installation (applies only if FTDIUSBSerialDriver is included)
     -f  include FTDIUSBSerialDriver in the package
     -s  application developer identity certificate key
         - example: -s "Developer Identity" (default is "Developer ID Application")
     -t  installer developer identity certificate key
         - example: -t "Developer Identity" (default is "Developer ID Installer")
-    -v  (REQUIRED) version
-        - example: -v 0.5.1
     -d  use deployment identifier (default is: com.test.ParallaxInc, deploy is: com.ParallaxInc.|APP_NAME|)
 
-    example: ./macsignedpack.sh —a "MyApplication" r -f -s "Developer ID Application" -t "Developer ID Installer" -v 0.5.1 -d
+    example: ./macsignedpack.sh —a "MyApplication" -v 0.5.1 r -f -s "Developer ID Application" -t "Developer ID Installer" -d
 
 EOF
 }
@@ -88,7 +88,7 @@ FTDI=false
 #
 # get parms as flags or as requiring arguments
 #
-while getopts "ha:rfs:t:dv:" OPTION
+while getopts "ha:v:rfs:t:d" OPTION
 do
     case $OPTION in
         h)
@@ -96,6 +96,9 @@ do
         a)
             APP_NAME=$OPTARG
             ;;           
+        v)
+            VERSION=$OPTARG
+            ;;
         r)
             if [[ $OPTARG =~ ^[0-9]+$ ]]
             then
@@ -137,9 +140,6 @@ do
             else
                 DEPLOY=true
             fi
-            ;;
-        v)
-            VERSION=$OPTARG
             ;;
         ?)
             echo "[HALT] Misconfigured options - see usage notes"
@@ -188,22 +188,26 @@ fi
 #
 # Show Info
 #
-echo "[INFO] Processing target: \"${DISTRIBUTION}${APP_NAME}.app\""
-echo "[INFO] As build version: \"${VERSION}\""
-echo "[INFO] Using application identity: \"${APP_IDENTITY}\""
-echo "[INFO] Using installer identity: \"${INST_IDENTITY}\""
+echo "----------------RECIPE----------------"
+echo "* Processing target: \"${DISTRIBUTION}${APP_NAME}.app\""
+echo "* As build version: \"${VERSION}\""
+echo "* Using application identity: \"${APP_IDENTITY}\""
+echo "* Using installer identity: \"${INST_IDENTITY}\""
 if [[ $RESTART == true ]]
 then
-    echo "[INFO] Restart required after installation"
+    echo "* Restart required after installation"
 else
-    echo "[INFO] Restart NOT required after installation"
+    echo "* Restart NOT required after installation"
 fi
 if [[ ${FTDI} == true ]]
 then
-    echo "[INFO] FTDI kext WILL BE installed by this package"
+    echo "* FTDI kext WILL BE installed by this package"
 else
-    echo "[INFO] FTDI kext WILL NOT BE installed by this package"
+    echo "* FTDI kext WILL NOT BE installed by this package"
 fi
+
+echo
+echo
 
 #
 # Use security utility to determine if the developer installation identity is valid
