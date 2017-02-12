@@ -208,7 +208,6 @@ else
 fi
 
 echo
-echo
 
 #
 # Use security utility to determine if the developer installation identity is valid
