@@ -47,7 +47,8 @@ OPTIONS:
         - example: -t "Developer Identity" (default is "Developer ID Installer")
     -d  use deployment identifier (default is: com.test.ParallaxInc, deploy is: com.ParallaxInc.|APP_NAME|)
 
-    example: ./macsignedpack.sh —a "MyApplication" -v 0.5.1 r -f -s "Developer ID Application" -t "Developer ID Installer" -d
+    examples: $0 -a "MyApplication" -v 1.0.56 -d
+              $0 —a "MyApplication" -v 1.0.56 -r -f -s "Developer ID Application" -t "Developer ID Installer" -d
 
 EOF
 }
