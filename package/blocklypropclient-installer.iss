@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "BlocklyPropClient"
-#define MyAppVersion "0.5"
+#define MyAppVersion "0.5.1"
 #define MyAppPublisher "Parallax, Inc."
 #define MyAppURL "http://blockly.parallax.com/"
 #define MyAppExeName "BlocklyPropClient.exe"
@@ -21,13 +21,13 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppName}
 DisableProgramGroupPage=yes
-OutputDir=dist
+OutputDir=..\dist
 OutputBaseFilename=BlocklyPropClient-setup
-SetupIconFile=dist\BlocklyPropClient.windows\blocklyprop.ico
+SetupIconFile=..\dist\BlocklyPropClient.windows\blocklyprop.ico
 Compression=lzma
 SolidCompression=yes
 DisableWelcomePage=no
-WizardImageFile=BlocklyPropClient-windows-installer-background.bmp
+WizardImageFile=win-resources\BlocklyPropClient-windows-installer-background.bmp
 
 [Messages]
 BeveledLabel=BlocklyPropClient Setup
@@ -43,10 +43,10 @@ Name: "program"; Description: "Program Files"; Types: full compact custom; Flags
 Name: "driver"; Description: "FTDI driver"; Types: full
 
 [Files]
-Source: "dist\BlocklyPropClient.windows\BlocklyPropClient.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: program
-Source: "dist\BlocklyPropClient.windows\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: program
-Source: "readme.txt"; DestDir: "{app}"; Flags: isreadme; Components: program
-Source: "drivers\Install-Parallax-USB-Drivers-v2.12.16.exe"; DestDir: "{app}\drivers"; AfterInstall: RunDriverInstaller; Flags: ignoreversion; Components: driver
+Source: "..\dist\BlocklyPropClient.windows\BlocklyPropClient.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: program
+Source: "..\dist\BlocklyPropClient.windows\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Components: program
+Source: "win-resources\readme.txt"; DestDir: "{app}"; Flags: isreadme; Components: program
+Source: "..\drivers\Install-Parallax-USB-Drivers-v2.12.16.exe"; DestDir: "{app}\drivers"; AfterInstall: RunDriverInstaller; Flags: ignoreversion; Components: driver
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
@@ -64,7 +64,7 @@ begin
   if not Exec(ExpandConstant('{app}\drivers\Install-Parallax-USB-Drivers-v2.12.16.exe'), '/UpperLeft /Immediate', '', SW_SHOWNORMAL,
     ewWaitUntilTerminated, ResultCode)
   then
-    MsgBox('Other installer failed to run!' + #13#10 +
+    MsgBox('USB Driver Installer failed to run!' + #13#10 +
       SysErrorMessage(ResultCode), mbError, MB_OK);
 end;
 
