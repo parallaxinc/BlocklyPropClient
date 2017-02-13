@@ -134,9 +134,16 @@ These steps need be performed frequently, as needed, after System Configuration 
     * _$ source VPython/bin/activate_
   * Build BlocklyPropClient
     * (VPython)$ PyInstaller BlocklyPropClient.macos.spec
-      * This builds and stores the application bundle in the ./dist subfolder
-  * Package BlocklyPropClient
-    * __steps to-be-determined__
+      * This builds and stores the application bundle in the ./dist subfolder as BlocklyPropClient.app
+  * Sign and Package BlocklyPropClient (requires signing certificate in Mac's KeyChain)
+    * Navigate to the package folder
+      * cd package
+    * Run the mac_sign_and_package script giving the proper version number and deploy option
+      * To include the FTDI USB Drivers inside the installer:
+        * ./mac_app_sign_and_package.sh -a "BlocklyPropClient" -v 0.5.1 -r -f -d
+      * To exclude the FTDI USB Drivers from the installer:
+        * ./mac_app_sign_and_package.sh -a "BlocklyPropClient" -v 0.5.1 -d
+    * The installer package will be written to the ../dist subfolder as BlocklyPropClient-0.5.1-setup-MacOS.pkg
   * Deactivate the Virtual Environment...
       * (VPython)$ deactivate
         * The "(VPython)" prefix will now disappear from your command-line

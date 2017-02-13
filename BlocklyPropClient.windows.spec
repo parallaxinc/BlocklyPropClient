@@ -11,7 +11,7 @@ exe = EXE(pyz,
           name='BlocklyPropClient.exe',
           debug=False,
           strip=None,
-          upx=True,
+          upx=False,
           console=False,
           icon='blocklyprop.ico' )
 propeller_libs_and_tools = Tree('propeller-tools', prefix='propeller-tools', excludes=['*.pdf', 'linux', 'mac'])
