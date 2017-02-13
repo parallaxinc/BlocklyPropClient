@@ -157,13 +157,16 @@ class BlocklyPropClient(tk.Tk):
         self.port.set(PORT)
         self.logger.info('Port number is: %s', self.port.get())
 
-        self.logfile.set(BlocklyLogger.path)
-        self.logger.info('Disk log file location is: %s', BlocklyLogger.path)
+        if BlocklyLogger.path is None:
+            self.logfile.set(' ')
+            self.logger.info('Disk logging is inactive')
+        else:
+            self.logfile.set(BlocklyLogger.path)
+            self.logger.info('Disk log file location is: %s', BlocklyLogger.path)
 
         self.server_process = None
 
         self.q = multiprocessing.Queue()
- #       self.stdoutToQueue = StdoutToQueue(self.q)
 
         monitor = threading.Thread(target=self.text_catcher)
         monitor.daemon = True
