@@ -21,7 +21,7 @@ coll = COLLECT(exe,
                a.datas,
                propeller_libs_and_tools,
                strip=None,
-               upx=True,
+               upx=False,
                name='BlocklyPropClient.linux')
 
 # Analysis
