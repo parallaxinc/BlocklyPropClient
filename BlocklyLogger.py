@@ -12,6 +12,7 @@ __author__ = 'Jim Ewald'
 
 # Constants
 PLATFORM_MACOS = 'darwin'
+PLATFORM_WINDOWS = 'win32'
 
 path = None
 
@@ -40,6 +41,8 @@ def init(filename = 'BlocklyPropClient.log'):
         else:
             # Set the module-level path
             path = logfile_name
+    elif platform == PLATFORM_WINDOWS:
+        logfile_name = __set_windows_logpath(filename)
 
     # Create a logger
     logger = logging.getLogger('blockly')
@@ -77,11 +80,11 @@ def __set_macos_logpath(filename):
 
     # Does the log directory exist
     try:
-        result = __verify_macos_logpath(log_path)
-        if result is None and __create_macos_logpath(log_path) is None:
-        # Try to create the directory
+        result = __verify_logpath(log_path)
+        if result is None and __create_logpath(log_path) is None:
+        # Try to create the directory in the tmp directory
             log_path = '/tmp'
-            result = __verify_macos_logpath(log_path)
+            result = __verify_logpath(log_path)
             if result is None:
                 return 1
 
@@ -90,19 +93,42 @@ def __set_macos_logpath(filename):
         return 2
 
 
-def __verify_macos_logpath(file_path):
+def __set_windows_logpath(filename):
+    user_home = os.path.expanduser('~')
+    log_path = user_home + '/AppData/Parallax'
+
+    # Does the log directory exist
     try:
-        info = os.stat(file_path)
-        return info
+        result = __verify_logpath(log_path)
+
+        if result is None and __create_logpath(log_path) is None:
+            # try to create the log file in the user's home directory
+            log_path = user_home
+            result = __verify_logpath(log_path)
+
+            if result is None:
+                return 1
+
+        return log_path + '/' + filename
+    except OSError:
+        return 2
+
+
+# Create a file path for the log file
+def __create_logpath(file_path):
+    try:
+        os.makedirs(file_path)
+        return path
     except OSError as ex:
         print ex.message
         return None
 
 
-def __create_macos_logpath(file_path):
+# Verify that the file for the log file exists
+def __verify_logpath(file_path):
     try:
-        os.makedirs(file_path)
-        return path
+        info = os.stat(file_path)
+        return info
     except OSError as ex:
         print ex.message
         return None
