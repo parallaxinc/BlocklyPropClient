@@ -23,7 +23,7 @@ import BlocklyHardware
 __author__ = 'Michel & Vale'
 
 PORT = 6009
-VERSION = "0.5.1"
+VERSION = "0.5.2"
 
 
 # Enable logging for functions outside of the class definition
@@ -159,7 +159,7 @@ class BlocklyPropClient(tk.Tk):
 
         if BlocklyLogger.path is None:
             self.logfile.set(' ')
-            self.logger.info('Disk logging is inactive')
+            self.logger.info('Disk logging is disabled.')
         else:
             self.logfile.set(BlocklyLogger.path)
             self.logger.info('Disk log file location is: %s', BlocklyLogger.path)

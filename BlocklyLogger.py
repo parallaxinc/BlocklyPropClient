@@ -14,7 +14,12 @@ __author__ = 'Jim Ewald'
 PLATFORM_MACOS = 'darwin'
 PLATFORM_WINDOWS = 'win32'
 
+DEFAULT_PATH_MACOS = '/Library/Logs/Parallax'
+DEFAULT_PATH_WINDOWS = '/AppData/Local/Parallax'
+DEFAULT_PATH_LINUX = '/tmp/'
+
 path = None
+
 
 def init(filename = 'BlocklyPropClient.log'):
     global path
@@ -48,41 +53,36 @@ def init(filename = 'BlocklyPropClient.log'):
     logger = logging.getLogger('blockly')
     logger.setLevel(logging.DEBUG)
 
-    # create a file handler to log events to the debug level. Log file
-    # is overwritten each time the app runs.
-    if not disable_filelogging:
-        handler = logging.FileHandler(logfile_name, mode='w')
-        handler.setLevel(logging.DEBUG)
-
     # create a console handler for error-level events
     console = logging.StreamHandler()
     console.setLevel(logging.ERROR)
 
     # create a logging format
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-    if not disable_filelogging:
-        handler.setFormatter(formatter)
-
     console.setFormatter(formatter)
 
-    # add the handlers to the logger
+    # create a file handler to log events to the debug level if disk logging is active.
+    #  Log file is overwritten each time the app runs.
     if not disable_filelogging:
+        handler = logging.FileHandler(logfile_name, mode='w')
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(formatter)
         logger.addHandler(handler)
 
+    # add the handlers to the logger
     logger.addHandler(console)
     logger.info("Logger has been started.")
 
 
 def __set_macos_logpath(filename):
     user_home = os.path.expanduser('~')
-    log_path = user_home + '/Library/Logs/Parallax'
+    log_path = user_home + DEFAULT_PATH_MACOS
 
     # Does the log directory exist
     try:
         result = __verify_logpath(log_path)
         if result is None and __create_logpath(log_path) is None:
-        # Try to create the directory in the tmp directory
+            # Try to create the directory in the tmp directory
             log_path = '/tmp'
             result = __verify_logpath(log_path)
             if result is None:
@@ -95,7 +95,7 @@ def __set_macos_logpath(filename):
 
 def __set_windows_logpath(filename):
     user_home = os.path.expanduser('~')
-    log_path = user_home + '/AppData/Parallax'
+    log_path = user_home + DEFAULT_PATH_WINDOWS
 
     # Does the log directory exist
     try:
