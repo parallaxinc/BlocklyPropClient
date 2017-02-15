@@ -10,14 +10,17 @@ from sys import platform
 
 __author__ = 'Jim Ewald'
 
-# Constants
+# Platform constants
+PLATFORM_LINUX = 'linux2'
 PLATFORM_MACOS = 'darwin'
 PLATFORM_WINDOWS = 'win32'
 
+# Default log path for each platform
 DEFAULT_PATH_MACOS = '/Library/Logs/Parallax'
 DEFAULT_PATH_WINDOWS = '/AppData/Local/Parallax'
-DEFAULT_PATH_LINUX = '/tmp/'
+DEFAULT_PATH_LINUX = '/tmp'
 
+# Resulting path for log file
 path = None
 
 
@@ -41,13 +44,17 @@ def init(filename = 'BlocklyPropClient.log'):
     # Set correct log file location
     if platform == PLATFORM_MACOS:
         logfile_name = __set_macos_logpath(filename)
-        if logfile_name is None:
-            disable_filelogging = True
-        else:
-            # Set the module-level path
-            path = logfile_name
     elif platform == PLATFORM_WINDOWS:
         logfile_name = __set_windows_logpath(filename)
+    elif platform == PLATFORM_LINUX:
+        logfile_name = __set_linux_logpath(filename)
+
+    # Verify that we have a valid location
+    if logfile_name is None:
+        disable_filelogging = True
+    else:
+        # Set the module-level path
+        path = logfile_name
 
     # Create a logger
     logger = logging.getLogger('blockly')
@@ -74,6 +81,24 @@ def init(filename = 'BlocklyPropClient.log'):
     logger.info("Logger has been started.")
 
 
+# Set the default log file location on a Linux system
+def __set_linux_logpath(filename):
+    user_home = os.path.expanduser('~')
+    log_path = user_home + DEFAULT_PATH_LINUX
+
+    # Does the log directory exist
+    try:
+        result = __verify_logpath(log_path)
+        if result is None and __create_logpath(log_path) is None:
+            return None
+        else:
+            return log_path + '/' + filename
+
+    except OSError:
+        return None
+
+
+# Set the default log file location on a MacOS system
 def __set_macos_logpath(filename):
     user_home = os.path.expanduser('~')
     log_path = user_home + DEFAULT_PATH_MACOS
@@ -86,13 +111,14 @@ def __set_macos_logpath(filename):
             log_path = '/tmp'
             result = __verify_logpath(log_path)
             if result is None:
-                return 1
+                return None
 
         return log_path + '/' + filename
     except OSError:
-        return 2
+        return None
 
 
+# Set the default log file location on a Windows system
 def __set_windows_logpath(filename):
     user_home = os.path.expanduser('~')
     log_path = user_home + DEFAULT_PATH_WINDOWS
@@ -107,11 +133,11 @@ def __set_windows_logpath(filename):
             result = __verify_logpath(log_path)
 
             if result is None:
-                return 1
+                return None
 
         return log_path + '/' + filename
     except OSError:
-        return 2
+        return None
 
 
 # Create a file path for the log file
