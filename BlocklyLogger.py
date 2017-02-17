@@ -10,10 +10,19 @@ from sys import platform
 
 __author__ = 'Jim Ewald'
 
-# Constants
+# Platform constants
+PLATFORM_LINUX = 'linux2'
 PLATFORM_MACOS = 'darwin'
+PLATFORM_WINDOWS = 'win32'
 
+# Default log path for each platform
+DEFAULT_PATH_MACOS = '/Library/Logs/Parallax'
+DEFAULT_PATH_WINDOWS = '/AppData/Local/Parallax'
+DEFAULT_PATH_LINUX = '/tmp'
+
+# Resulting path for log file
 path = None
+
 
 def init(filename = 'BlocklyPropClient.log'):
     global path
@@ -35,21 +44,21 @@ def init(filename = 'BlocklyPropClient.log'):
     # Set correct log file location
     if platform == PLATFORM_MACOS:
         logfile_name = __set_macos_logpath(filename)
-        if logfile_name is None:
-            disable_filelogging = True
-        else:
-            # Set the module-level path
-            path = logfile_name
+    elif platform == PLATFORM_WINDOWS:
+        logfile_name = __set_windows_logpath(filename)
+    elif platform == PLATFORM_LINUX:
+        logfile_name = __set_linux_logpath(filename)
+
+    # Verify that we have a valid location
+    if logfile_name is None:
+        disable_filelogging = True
+    else:
+        # Set the module-level path
+        path = logfile_name
 
     # Create a logger
     logger = logging.getLogger('blockly')
     logger.setLevel(logging.DEBUG)
-
-    # create a file handler to log events to the debug level. Log file
-    # is overwritten each time the app runs.
-    if not disable_filelogging:
-        handler = logging.FileHandler(logfile_name, mode='w')
-        handler.setLevel(logging.DEBUG)
 
     # create a console handler for error-level events
     console = logging.StreamHandler()
@@ -57,52 +66,95 @@ def init(filename = 'BlocklyPropClient.log'):
 
     # create a logging format
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-    if not disable_filelogging:
-        handler.setFormatter(formatter)
-
     console.setFormatter(formatter)
 
-    # add the handlers to the logger
+    # create a file handler to log events to the debug level if disk logging is active.
+    #  Log file is overwritten each time the app runs.
     if not disable_filelogging:
+        handler = logging.FileHandler(logfile_name, mode='w')
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(formatter)
         logger.addHandler(handler)
 
+    # add the handlers to the logger
     logger.addHandler(console)
     logger.info("Logger has been started.")
 
 
-def __set_macos_logpath(filename):
+# Set the default log file location on a Linux system
+def __set_linux_logpath(filename):
     user_home = os.path.expanduser('~')
-    log_path = user_home + '/Library/Logs/Parallax'
+    log_path = user_home + DEFAULT_PATH_LINUX
 
     # Does the log directory exist
     try:
-        result = __verify_macos_logpath(log_path)
-        if result is None and __create_macos_logpath(log_path) is None:
-        # Try to create the directory
+        result = __verify_logpath(log_path)
+        if result is None and __create_logpath(log_path) is None:
+            return None
+        else:
+            return log_path + '/' + filename
+
+    except OSError:
+        return None
+
+
+# Set the default log file location on a MacOS system
+def __set_macos_logpath(filename):
+    user_home = os.path.expanduser('~')
+    log_path = user_home + DEFAULT_PATH_MACOS
+
+    # Does the log directory exist
+    try:
+        result = __verify_logpath(log_path)
+        if result is None and __create_logpath(log_path) is None:
+            # Try to create the directory in the tmp directory
             log_path = '/tmp'
-            result = __verify_macos_logpath(log_path)
+            result = __verify_logpath(log_path)
             if result is None:
-                return 1
+                return None
 
         return log_path + '/' + filename
     except OSError:
-        return 2
+        return None
 
 
-def __verify_macos_logpath(file_path):
+# Set the default log file location on a Windows system
+def __set_windows_logpath(filename):
+    user_home = os.path.expanduser('~')
+    log_path = user_home + DEFAULT_PATH_WINDOWS
+
+    # Does the log directory exist
     try:
-        info = os.stat(file_path)
-        return info
+        result = __verify_logpath(log_path)
+
+        if result is None and __create_logpath(log_path) is None:
+            # try to create the log file in the user's home directory
+            log_path = user_home
+            result = __verify_logpath(log_path)
+
+            if result is None:
+                return None
+
+        return log_path + '/' + filename
+    except OSError:
+        return None
+
+
+# Create a file path for the log file
+def __create_logpath(file_path):
+    try:
+        os.makedirs(file_path)
+        return path
     except OSError as ex:
         print ex.message
         return None
 
 
-def __create_macos_logpath(file_path):
+# Verify that the file for the log file exists
+def __verify_logpath(file_path):
     try:
-        os.makedirs(file_path)
-        return path
+        info = os.stat(file_path)
+        return info
     except OSError as ex:
         print ex.message
         return None
