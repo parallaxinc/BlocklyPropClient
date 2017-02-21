@@ -24,6 +24,7 @@ class SerialSocket(WebSocket):
         module_logger.info('Message received')
         if message.data[0:len(OPEN_CONNECTION_STRING)] == OPEN_CONNECTION_STRING:
             connection_string = message.data[len(OPEN_CONNECTION_STRING):]
+            self.logger.debug('Connection config string: %s', connection_string)
 
             port = connection_string
             baudrate = 115200
@@ -32,6 +33,7 @@ class SerialSocket(WebSocket):
             if len(connection_info) == 2:
                 port = connection_info[0]
                 baudrate = connection_info[1]
+                self.logger.debug('Setting serial port config: Port %s, Speed %s', port, baudrate)
 
             self.serial.baudrate = baudrate
             self.serial.port = port
