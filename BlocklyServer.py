@@ -51,13 +51,19 @@ class BlocklyServer(object):
         self.logger.debug('Port list retreived')
 
         ports = self.propellerLoad.get_ports()
-        filtered_ports = []
-        for port in ports:
-            self.logger.debug('Port %s discovered.', port)
-            if ' bt ' not in port.lower() and 'bluetooth' not in port.lower():
-                self.logger.debug('Port %2 appended to list.', port)
-                filtered_ports.append(port)
-        return filtered_ports
+        if len(ports) > 0:
+            filtered_ports = []
+            for port in ports:
+                self.logger.debug('Port %s discovered.', port)
+                if ' bt ' not in port.lower() and 'bluetooth' not in port.lower():
+                    self.logger.debug('Port %2 appended to list.', port)
+                    filtered_ports.append(port)
+            return filtered_ports
+        else:
+            # No useable ports detected. Need to determine how the browser
+            # handles an empty list of available ports.
+            self.logger.debug('No ports detected. Replying with /dev/null')
+            return '/dev/null'
 
 
     @cherrypy.expose(alias='load.action')
