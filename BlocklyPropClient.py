@@ -26,6 +26,7 @@ PORT = 6009
 VERSION = "0.5.2"
 
 
+
 # Enable logging for functions outside of the class definition
 module_logger = logging.getLogger('blockly')
 
@@ -260,5 +261,15 @@ if __name__ == '__main__':
     multiprocessing.freeze_support()
 
     bp_client = BlocklyPropClient()
-    bp_client.set_version(VERSION)
+
+    # The application version number was converted to a traditional 'major'.'minor'.'patch_level'
+    # format. There is code in the BlocklyProp Javascript that expects the cersion number as a
+    # float. We handle that issue here.
+    ver_elements = VERSION.split('.')
+    if len(ver_elements) >= 2:
+        n_version = float(ver_elements[0] + '.' + ver_elements[1])
+    else:
+        n_version = 0.4
+
+    bp_client.set_version(n_version)
     bp_client.mainloop()
