@@ -55,15 +55,9 @@ class PropellerLoad:
             return self.ports
         else:
             self.logger.info("Enumerating host ports")
-            ports = [port for (port, driver, usb) in list_ports.comports()]
-            #self.appdir +
-            #process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE)
 
-            #out, err = process.communicate()
-#        return json.dumps(out.splitlines())
-            #ports = []
-            #for port in out.splitlines():
-            #    ports.append(port[port.index('/'):])
+            ports = [port for (port, driver, usb) in list_ports.comports()]
+            self.logger.debug('Port count: %s', len(ports))
 
             self.ports = ports
             return ports
