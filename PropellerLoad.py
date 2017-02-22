@@ -18,10 +18,10 @@ class PropellerLoad:
         self.logger.info('Creating loader logger.')
 
         self.propeller_load_executables = {
-            "Windows": "/propeller-tools/windows/propeller-load.exe",
-            "Linux": "/propeller-tools/linux/propeller-load",
-            "MacOS": "/propeller-tools/mac/propeller-load",
-            "Darwin": "/propeller-tools/mac/propeller-load"
+            "Windows":  "/propeller-tools/windows/propeller-load.exe",
+            "Linux":    "/propeller-tools/linux/propeller-load",
+            "MacOS":    "/propeller-tools/mac/propeller-load",
+            "Darwin":   "/propeller-tools/mac/propeller-load"
         }
 
         self.load_actions = {
@@ -30,7 +30,7 @@ class PropellerLoad:
         }
 
         if not platform.system() in self.propeller_load_executables:
-            #showerror("Unsupported", platform.system() + " is currently unsupported")
+            self.logger.error('The %s platform is not supported at this time.', platform.system())
             print("Unsupported", platform.system() + " is currently unsupported")
             exit(1)
 
@@ -50,7 +50,7 @@ class PropellerLoad:
 
             process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
             out, err = process.communicate()
-
+            self.logger.debug('Loader complete: Error code %s returned.', err)
             self.ports = out.splitlines()
             return self.ports
         else:
@@ -73,8 +73,11 @@ class PropellerLoad:
         self.loading = True
 
         executable = self.appdir + self.propeller_load_executables[platform.system()]
+        self.logger.debug('Loader executable path is: %s)', executable)
+
         executing_data = [executable, "-r"]
         executing_data.extend(self.load_actions[action]["compile-options"])
+        self.logger.debug('Loader commandline is: %s', executing_data)
 
         if com_port is not None:
             self.logger.info("Talking to com port.")
