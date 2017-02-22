@@ -13,6 +13,7 @@ from PropellerLoad import PropellerLoad
 __author__ = 'Michel'
 
 PORT = 6009
+
 # Enable logging for functions outside of the class definition
 module_logger = logging.getLogger('blockly.server')
 
