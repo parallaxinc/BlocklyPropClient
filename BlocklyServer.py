@@ -33,6 +33,7 @@ class BlocklyServer(object):
     @cherrypy.tools.allow(methods=['GET'])
     def index(self):
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
+
         serverinfo = {
             "server": "BlocklyPropHTTP",
             "version": self.version
