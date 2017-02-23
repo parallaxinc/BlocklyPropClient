@@ -35,7 +35,7 @@ class PropellerLoad:
             exit(1)
 
         self.appdir = os.getcwd()
-        self.appdir = os.path.dirname(sys.argv[0])
+        # self.appdir = os.path.dirname(sys.argv[0])
 
     def get_ports(self):
         self.logger.info('Getting ports')
