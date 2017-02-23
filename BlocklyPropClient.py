@@ -1,6 +1,12 @@
 """
     BlocklyProp Client
 
+    0.5.3  February 22, 2017
+    - Correct error in path to propeller-load executable.
+    - Detect condition where serial port has disappeared
+    - Correct error where browser request for specific port
+      speed was disregarded.
+
 """
 import Tkinter as tk
 import ttk as ttk
@@ -23,20 +29,29 @@ import BlocklyHardware
 __author__ = 'Michel & Vale'
 
 PORT = 6009
-VERSION = "0.5.2"
 
+# -----------------------------------------------------------------------
+# NOTE:
+#
+# Please verify that the version number in the local about.txt and the
+# ./package/win0resources/blocklypropclient-installer.iss
+# -----------------------------------------------------------------------
+VERSION = "0.5.3"
 
 
 # Enable logging for functions outside of the class definition
-module_logger = logging.getLogger('blockly')
+module_logger = None
 
 
 class BlocklyPropClient(tk.Tk):
     def __init__(self, *args, **kwargs):
+        global module_logger
 
         # Enable application logging
         BlocklyLogger.init()
         self.logger = logging.getLogger('blockly.main')
+        module_logger = logging.getLogger('blockly')
+
         self.logger.info('Creating logger.')
 
         BlocklyHardware.init()

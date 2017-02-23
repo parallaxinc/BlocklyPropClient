@@ -6,14 +6,17 @@ BlocklyPropLogger manages the application logging process.
 
 import os
 import logging
-from sys import platform
+import platform
+
 
 __author__ = 'Jim Ewald'
 
+
 # Platform constants
-PLATFORM_LINUX = 'linux2'
-PLATFORM_MACOS = 'darwin'
-PLATFORM_WINDOWS = 'win32'
+PLATFORM_LINUX = 'Linux'
+PLATFORM_MACOS = 'MacOS'
+PLATFORM_DARWIN = 'MacOS'
+PLATFORM_WINDOWS = 'Windows'
 
 # Default log path for each platform
 DEFAULT_PATH_MACOS = '/Library/Logs/Parallax'
@@ -22,6 +25,8 @@ DEFAULT_PATH_LINUX = '/tmp'
 
 # Resulting path for log file
 path = None
+
+loglevel = logging.DEBUG
 
 
 def init(filename = 'BlocklyPropClient.log'):
@@ -42,11 +47,12 @@ def init(filename = 'BlocklyPropClient.log'):
     disable_filelogging = False
 
     # Set correct log file location
-    if platform == PLATFORM_MACOS:
+    system = platform.system()
+    if (system == PLATFORM_MACOS) or (system == PLATFORM_DARWIN):
         logfile_name = __set_macos_logpath(filename)
-    elif platform == PLATFORM_WINDOWS:
+    elif system == PLATFORM_WINDOWS:
         logfile_name = __set_windows_logpath(filename)
-    elif platform == PLATFORM_LINUX:
+    elif system == PLATFORM_LINUX:
         logfile_name = __set_linux_logpath(filename)
 
     # Verify that we have a valid location
@@ -58,11 +64,11 @@ def init(filename = 'BlocklyPropClient.log'):
 
     # Create a logger
     logger = logging.getLogger('blockly')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(loglevel)
 
     # create a console handler for error-level events
     console = logging.StreamHandler()
-    console.setLevel(logging.ERROR)
+    console.setLevel(loglevel)
 
     # create a logging format
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -72,7 +78,7 @@ def init(filename = 'BlocklyPropClient.log'):
     #  Log file is overwritten each time the app runs.
     if not disable_filelogging:
         handler = logging.FileHandler(logfile_name, mode='w')
-        handler.setLevel(logging.DEBUG)
+        handler.setLevel(loglevel)
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
