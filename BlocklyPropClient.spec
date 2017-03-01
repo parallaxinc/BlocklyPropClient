@@ -3,8 +3,8 @@
 block_cipher = None
 
 
-a = Analysis(['BlocklyPropClient.linux'],
-             pathex=['/home/developer/Projects/BlocklyPropClient'],
+a = Analysis(['BlocklyPropClient.py'],
+             pathex=['/Users/jmartin/PythonProjects/BlocklyPropClient'],
              binaries=None,
              datas=None,
              hiddenimports=[],
@@ -22,12 +22,16 @@ exe = EXE(pyz,
           name='BlocklyPropClient',
           debug=False,
           strip=False,
-          upx=False,
-          console=True )
+          upx=True,
+          console=False , icon='package/mac-resources/BlocklyPropClient.icns')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
                a.datas,
                strip=False,
-               upx=False,
+               upx=True,
                name='BlocklyPropClient')
+app = BUNDLE(coll,
+             name='BlocklyPropClient.app',
+             icon='./package/mac-resources/BlocklyPropClient.icns',
+             bundle_identifier=None)
