@@ -190,4 +190,10 @@ To regenerate a specification file for Mac OS:
     propeller_libs_and_tools,
 ```
 
+   * At the end of the "app" block, change that last element to the following lines (where x.x.x is the version number):
+```
+   bundle_identifier='com.ParallaxInc.BlocklyPropClient',
+   info_plist={'CFBundleShortVersionString': 'x.x.x'})
+```
+
    * Save the file and rename to __BlocklyPropClient.macos.spec__
