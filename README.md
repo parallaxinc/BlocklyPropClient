@@ -15,6 +15,17 @@ BlocklyPropClient is written using Python v2.7.
 
 Installations are self-contained; no extra dependencies are required except for USB drivers for Parallax development boards.
 
+## Running on Linux
+You will first have to install some python dependencies before you can run BlocklyPropClient.
+
+* ws4py
+* pyserial
+* cherrypy
+
+These can all be installed using the auto-installer by running the following in the terminal: 'python InstallDependencies.py'
+
+Then execute: python BlocklyPropClient.py
+
 
 # Developers
 ------------
