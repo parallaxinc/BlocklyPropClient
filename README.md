@@ -146,16 +146,54 @@ These steps need be performed frequently, as needed, after System Configuration 
   * Build BlocklyPropClient
     * (VPython)$ PyInstaller BlocklyPropClient.macos.spec
       * This builds and stores the application bundle in the ./dist subfolder as BlocklyPropClient.app
+      * See BlocklyPropClient.macos.spec Details (below) for more information
   * Sign and Package BlocklyPropClient (requires signing certificate in Mac's KeyChain)
     * Navigate to the package folder
       * cd package
     * Run the mac_sign_and_package script giving the proper version number and deploy option
       * To include the FTDI USB Drivers inside the installer:
-        * ./mac_app_sign_and_package.sh -a "BlocklyPropClient" -v 0.5.1 -r -f -d
+        * _$ ./mac_app_sign_and_package.sh -a "BlocklyPropClient" -v 0.5.1 -r -f -d_
       * To exclude the FTDI USB Drivers from the installer:
-        * ./mac_app_sign_and_package.sh -a "BlocklyPropClient" -v 0.5.1 -d
+        * _$ ./mac_app_sign_and_package.sh -a "BlocklyPropClient" -v 0.5.1 -d_
     * The installer package will be written to the ../dist subfolder as BlocklyPropClient-0.5.1-setup-MacOS.pkg
   * Deactivate the Virtual Environment...
-      * (VPython)$ deactivate
+      * _(VPython)$ deactivate_
         * The "(VPython)" prefix will now disappear from your command-line
 
+#### BlocklyPropClient.macos.spec Details
+
+The BlocklyPropClient.macos.spec is the build specification file for Mac OS.  This file contains Python executable source generated automatically by the pyi-makespec command and also later amended to include features not expressible via the pyi-makespec command-line.
+
+To regenerate a specification file for Mac OS:
+ * Navigate to the project
+   * _$ cd ~/PythonProjects/BlocklyPropClient_
+ * Activate the _Virtual Python_ environment for BlocklyPropClient
+   * _$ source VPython/bin/activate_
+ * Generate a new BlocklyPropClient.spec file
+   * _(VPython)$ pyi-makespec --windowed --icon BlocklyPropClient.icns --osx-bundle-identifier com.ParallaxInc.BlocklyPropClient --noupx BlocklyPropClient.py_
+ * Update the BlocklyPropClient.spec file to include propeller-tools content
+   * Below the "exe" block, add the following three lines
+
+```
+    #Propeller Tools
+    propeller_libs_and_tools = Tree('propeller-tools', prefix='propeller-tools', excludes=['*.pdf', 'windows', 'linux'])
+    propeller_libs_and_tools += [('about.txt', 'about.txt', 'About file')]
+```
+
+   * Above the "coll" block, indicates it is modified
+```
+    #Collection (edited to include Propeller Tools)
+```
+
+   * Below the "coll" block's "a.datas," line, insert the following line
+```
+    propeller_libs_and_tools,
+```
+
+   * At the end of the "app" block, change that last element to the following lines (where x.x.x is the version number):
+```
+   bundle_identifier='com.ParallaxInc.BlocklyPropClient',
+   info_plist={'CFBundleShortVersionString': 'x.x.x'})
+```
+
+   * Save the file and rename to __BlocklyPropClient.macos.spec__
