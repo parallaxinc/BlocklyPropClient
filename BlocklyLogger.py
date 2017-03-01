@@ -53,6 +53,7 @@ def init(filename = 'BlocklyPropClient.log'):
 
     # A posix system could be a MacOS or a Linux variety
     if system == PLATFORM_POSIX:
+        # Asking for a MacOS version number only works on MacOS
         is_mac = platform.mac_ver()
         if is_mac[0] == "":
             # This must be a Linux platform
@@ -110,8 +111,10 @@ def __set_linux_logpath(filename):
     # Does the log directory exist
     try:
         result = __verify_logpath(log_path)
-        if result is None and __create_logpath(log_path) is None:
-            return None
+        if result is None or result == False:
+            # Path does not exist. Create it
+            if __create_logpath(log_path) is None:
+                return None
         else:
             return log_path + '/' + filename
 
@@ -129,12 +132,14 @@ def __set_macos_logpath(filename):
     # Does the log directory exist
     try:
         result = __verify_logpath(log_path)
-        if result is None and __create_logpath(log_path) is None:
-            # Try to create the directory in the tmp directory
-            log_path = '/tmp'
-            result = __verify_logpath(log_path)
-            if result is None:
-                return None
+        if result is None or result == False:
+            # Path does not exist. Let's create it
+            if __create_logpath(log_path) is None:
+                # Try to create the directory in the tmp directory
+                log_path = '/tmp'
+                result = __verify_logpath(log_path)
+                if result is None:
+                    return None
 
         return log_path + '/' + filename
     except OSError:
@@ -152,13 +157,15 @@ def __set_windows_logpath(filename):
     try:
         result = __verify_logpath(log_path)
 
-        if result is None and __create_logpath(log_path) is None:
-            # try to create the log file in the user's home directory
-            log_path = user_home
-            result = __verify_logpath(log_path)
+        if result is None or result == False:
+            # Path does not exist. Create it
+            if __create_logpath(log_path) is None:
+                # try to create the log file in the user's home directory
+                log_path = user_home
+                result = __verify_logpath(log_path)
 
-            if result is None:
-                return None
+                if result is None:
+                    return None
 
         return log_path + '/' + filename
     except OSError:
@@ -169,7 +176,8 @@ def __set_windows_logpath(filename):
 def __create_logpath(file_path):
     try:
         os.makedirs(file_path)
-        return path
+        return True
+
     except OSError as ex:
         print ex.message
         return None
@@ -179,11 +187,12 @@ def __create_logpath(file_path):
 def __verify_logpath(file_path):
     try:
         print("Testing access to: %s", file_path)
-        info = os.access(file_path, os.W_OK)
-        return info
+        return os.access(file_path, os.W_OK)
+
     except OSError as ex:
         print ex.message
         return None
+
     except Exception as ex:
         print ex.message
         return None
