@@ -13,15 +13,16 @@ __author__ = 'Jim Ewald'
 
 
 # Platform constants
+PLATFORM_POSIX = "posix"
 PLATFORM_LINUX = 'Linux'
 PLATFORM_MACOS = 'MacOS'
-PLATFORM_DARWIN = 'MacOS'
+PLATFORM_DARWIN = 'Darwin'
 PLATFORM_WINDOWS = 'Windows'
 
 # Default log path for each platform
-DEFAULT_PATH_MACOS = '/Library/Logs/Parallax'
-DEFAULT_PATH_WINDOWS = '/AppData/Local/Parallax'
-DEFAULT_PATH_LINUX = '/tmp'
+DEFAULT_PATH_MACOS = 'Library/Logs/Parallax'
+DEFAULT_PATH_WINDOWS = 'AppData/Local/Parallax'
+DEFAULT_PATH_LINUX = 'tmp'
 
 # Resulting path for log file
 path = None
@@ -48,6 +49,17 @@ def init(filename = 'BlocklyPropClient.log'):
 
     # Set correct log file location
     system = platform.system()
+    print("Platform detected is: %", system)
+
+    # A posix system could be a MacOS or a Linux variety
+    if system == PLATFORM_POSIX:
+        is_mac = platform.mac_ver()
+        if is_mac[0] == "":
+            # This must be a Linux platform
+            system = PLATFORM_LINUX
+        else:
+            system = PLATFORM_MACOS
+
     if (system == PLATFORM_MACOS) or (system == PLATFORM_DARWIN):
         logfile_name = __set_macos_logpath(filename)
     elif system == PLATFORM_WINDOWS:
@@ -61,6 +73,7 @@ def init(filename = 'BlocklyPropClient.log'):
     else:
         # Set the module-level path
         path = logfile_name
+        print("Sending file logging output to: ", path)
 
     # Create a logger
     logger = logging.getLogger('blockly')
@@ -90,7 +103,9 @@ def init(filename = 'BlocklyPropClient.log'):
 # Set the default log file location on a Linux system
 def __set_linux_logpath(filename):
     user_home = os.path.expanduser('~')
-    log_path = user_home + DEFAULT_PATH_LINUX
+    print("User home directory is: %s", user_home)
+    log_path = user_home + "/" + DEFAULT_PATH_LINUX
+    print("Logfile path is %s", log_path)
 
     # Does the log directory exist
     try:
@@ -107,7 +122,9 @@ def __set_linux_logpath(filename):
 # Set the default log file location on a MacOS system
 def __set_macos_logpath(filename):
     user_home = os.path.expanduser('~')
-    log_path = user_home + DEFAULT_PATH_MACOS
+    print("User home directory is: %s", user_home)
+    log_path = user_home + "/" + DEFAULT_PATH_MACOS
+    print("Logfile path is %s", log_path)
 
     # Does the log directory exist
     try:
@@ -127,7 +144,9 @@ def __set_macos_logpath(filename):
 # Set the default log file location on a Windows system
 def __set_windows_logpath(filename):
     user_home = os.path.expanduser('~')
-    log_path = user_home + DEFAULT_PATH_WINDOWS
+    print("User home directory is: %s", user_home)
+    log_path = user_home + "/" + DEFAULT_PATH_WINDOWS
+    print("Log file path is: %s", log_path)
 
     # Does the log directory exist
     try:
@@ -159,8 +178,12 @@ def __create_logpath(file_path):
 # Verify that the file for the log file exists
 def __verify_logpath(file_path):
     try:
-        info = os.stat(file_path)
+        print("Testing access to: %s", file_path)
+        info = os.access(file_path, os.W_OK)
         return info
     except OSError as ex:
+        print ex.message
+        return None
+    except Exception as ex:
         print ex.message
         return None
