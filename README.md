@@ -165,14 +165,14 @@ These steps need be performed frequently, as needed, after System Configuration 
 The BlocklyPropClient.macos.spec is the build specification file for Mac OS.  This file contains Python executable source generated automatically by the pyi-makespec command and also later amended to include features not expressible via the pyi-makespec command-line.
 
 To regenerate a specification file for Mac OS:
-  * Navigate to the project
-    * _$ cd ~/PythonProjects/BlocklyPropClient_
-  * Activate the _Virtual Python_ environment for BlocklyPropClient
-    * _$ source VPython/bin/activate_
-  * Generate a new BlocklyPropClient.spec file
-    * _(VPython)$ pyi-makespec --windowed --icon BlocklyPropClient.icns --osx-bundle-identifier com.ParallaxInc.BlocklyPropClient --noupx BlocklyPropClient.py_
-  * Update the BlocklyPropClient.spec file to include propeller-tools content
-    * Below the "exe" block, add the following three lines
+ * Navigate to the project
+   * _$ cd ~/PythonProjects/BlocklyPropClient_
+ * Activate the _Virtual Python_ environment for BlocklyPropClient
+   * _$ source VPython/bin/activate_
+ * Generate a new BlocklyPropClient.spec file
+   * _(VPython)$ pyi-makespec --windowed --icon BlocklyPropClient.icns --osx-bundle-identifier com.ParallaxInc.BlocklyPropClient --noupx BlocklyPropClient.py_
+ * Update the BlocklyPropClient.spec file to include propeller-tools content
+   * Below the "exe" block, add the following three lines
 
 ```
     #Propeller Tools
@@ -180,14 +180,14 @@ To regenerate a specification file for Mac OS:
     propeller_libs_and_tools += [('about.txt', 'about.txt', 'About file')]
 ```
 
-    * Above the "coll" block, indicates it is modified
+   * Above the "coll" block, indicates it is modified
 ```
     #Collection (edited to include Propeller Tools)
 ```
 
-    * Below the "coll" block's "a.datas," line, insert the following line
+   * Below the "coll" block's "a.datas," line, insert the following line
 ```
     propeller_libs_and_tools,
 ```
 
-    * Save the file and rename to __BlocklyPropClient.macos.spec__
+   * Save the file and rename to __BlocklyPropClient.macos.spec__
