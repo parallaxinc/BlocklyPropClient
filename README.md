@@ -146,6 +146,7 @@ These steps need be performed frequently, as needed, after System Configuration 
   * Build BlocklyPropClient
     * (VPython)$ PyInstaller BlocklyPropClient.macos.spec
       * This builds and stores the application bundle in the ./dist subfolder as BlocklyPropClient.app
+      * See BlocklyPropClient.macos.spec Details (below) for more information
   * Sign and Package BlocklyPropClient (requires signing certificate in Mac's KeyChain)
     * Navigate to the package folder
       * cd package
@@ -159,3 +160,23 @@ These steps need be performed frequently, as needed, after System Configuration 
       * (VPython)$ deactivate
         * The "(VPython)" prefix will now disappear from your command-line
 
+#### BlocklyPropClient.macos.spec Details
+
+The BlocklyPropClient.macos.spec is the build specification file for Mac OS.  This file contains Python executable source generated automatically by the pyi-makespec command and also later amended to include features not expressible via the pyi-makespec command-line.
+
+To regenerate a specification file for Mac OS:
+  * From within the ~/PythonProjects/BlocklyPropClient folder...
+  * Activate the _Virtual Python_ environment for BlocklyPropClient
+    * _$ source VPython/bin/activate_
+  * Generate a new BlocklyPropClient.spec file
+    * _(VPython)$ pyi-makespec --windowed --icon BlocklyPropClient.icns --osx-bundle-identifier com.ParallaxInc.BlocklyPropClient --noupx BlocklyPropClient.py_
+  * Update the BlocklyPropClient.spec file to include propeller-tools content
+    * Below the "exe" block, add the following three lines
+> # Propeller Tools
+> propeller_libs_and_tools = Tree('propeller-tools', prefix='propeller-tools', excludes=['*.pdf', 'windows', 'linux'])
+> propeller_libs_and_tools += [('about.txt', 'about.txt', 'About file')]
+    * Above the "coll" block, indicates it is modified
+> # Collection (edited to include Propeller Tools)
+    * Below the "coll" block's "a.datas," line, insert the following line
+> propeller_libs_and_tools,
+    * Save the file and rename to __BlocklyPropClient.macos.spec__

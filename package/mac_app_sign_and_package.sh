@@ -265,7 +265,7 @@ then
     #
     # Found bundle
     #
-    if [[ -e ${DISTRIBUTION}${APP_BUNDLE}/_CodeSignature/CodeResources ]]
+    if [[ -e ${DISTRIBUTION}${APP_BUNDLE}/Contents/_CodeSignature/CodeResources ]]
     then
         #
         # Found code signature, now we'll check validity
