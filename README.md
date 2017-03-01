@@ -174,17 +174,17 @@ To regenerate a specification file for Mac OS:
   * Update the BlocklyPropClient.spec file to include propeller-tools content
     * Below the "exe" block, add the following three lines
 
-
+```
     #Propeller Tools
     propeller_libs_and_tools = Tree('propeller-tools', prefix='propeller-tools', excludes=['*.pdf', 'windows', 'linux'])
     propeller_libs_and_tools += [('about.txt', 'about.txt', 'About file')]
-
-   * Above the "coll" block, indicates it is modified
-
+```
+     * Above the "coll" block, indicates it is modified
+```
     #Collection (edited to include Propeller Tools)
-
-   * Below the "coll" block's "a.datas," line, insert the following line
-
+```
+     * Below the "coll" block's "a.datas," line, insert the following line
+```
     propeller_libs_and_tools,
-
-   * Save the file and rename to __BlocklyPropClient.macos.spec__
+```
+     * Save the file and rename to __BlocklyPropClient.macos.spec__
