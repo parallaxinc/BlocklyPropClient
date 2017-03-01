@@ -175,13 +175,13 @@ To regenerate a specification file for Mac OS:
     * Below the "exe" block, add the following three lines
 
 
-    # Propeller Tools
+    #Propeller Tools
     propeller_libs_and_tools = Tree('propeller-tools', prefix='propeller-tools', excludes=['*.pdf', 'windows', 'linux'])
     propeller_libs_and_tools += [('about.txt', 'about.txt', 'About file')]
 
    * Above the "coll" block, indicates it is modified
 
-    # Collection (edited to include Propeller Tools)
+    #Collection (edited to include Propeller Tools)
 
    * Below the "coll" block's "a.datas," line, insert the following line
 
