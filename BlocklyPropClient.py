@@ -1,6 +1,12 @@
 """
     BlocklyProp Client
 
+    0.5.3  February 22, 2017
+    - Correct error in path to propeller-load executable.
+    - Detect condition where serial port has disappeared
+    - Correct error where browser request for specific port
+      speed was disregarded.
+
 """
 import Tkinter as tk
 import ttk as ttk
@@ -23,19 +29,29 @@ import BlocklyHardware
 __author__ = 'Michel & Vale'
 
 PORT = 6009
-VERSION = "0.5.1"
+
+# -----------------------------------------------------------------------
+# NOTE:
+#
+# Please verify that the version number in the local about.txt and the
+# ./package/win0resources/blocklypropclient-installer.iss
+# -----------------------------------------------------------------------
+VERSION = "0.5.3"
 
 
 # Enable logging for functions outside of the class definition
-module_logger = logging.getLogger('blockly')
+module_logger = None
 
 
 class BlocklyPropClient(tk.Tk):
     def __init__(self, *args, **kwargs):
+        global module_logger
 
         # Enable application logging
         BlocklyLogger.init()
         self.logger = logging.getLogger('blockly.main')
+        module_logger = logging.getLogger('blockly')
+
         self.logger.info('Creating logger.')
 
         BlocklyHardware.init()
@@ -45,11 +61,13 @@ class BlocklyPropClient(tk.Tk):
 
         # initialize values
         self.version = 0.0
+        self.app_version = "0.0"
         self.connected = False
 
-        # Path
+        # Path to where application was launched
         self.appdir = os.path.dirname(sys.argv[0])
         self.logger.info('Logging is enabled')
+        self.logger.info('Application launched from %s', self.appdir)
 
         # initialize config variables
         self.ip_address = tk.StringVar()
@@ -62,21 +80,28 @@ class BlocklyPropClient(tk.Tk):
 
         self.title("BlocklyProp")
 
-        # Set icon
+        # Set icon for Windows platform
         self.logger.info('Operating system is %s', os.name)
         if "nt" == os.name:
             self.wm_iconbitmap(bitmap='blocklyprop.ico')
-        else:
-            #self.wm_iconbitmap(bitmap = "@myicon.xbm")
-            pass
 
+        # Init the system
         self.initialize()
         self.initialize_menu()
-        # Verify the hardware is connected and available
 
+    # Set the application version and app_version values
     def set_version(self, version):
-        self.logger.info('Application version is %s', version)
-        self.version = version
+        # The application version number was converted to a traditional 'major'.'minor'.'patch_level'
+        # format. There is code in the BlocklyProp Javascript that expects the version number as a
+        # float. We handle that issue here.
+        ver_elements = VERSION.split('.')
+        if len(ver_elements) >= 2:
+            n_version = float(ver_elements[0] + '.' + ver_elements[1])
+        else:
+            n_version = 0.4
+
+        self.version = n_version
+        self.app_version = version
 
     def initialize(self):
         self.logger.info('Initializing the UI')
@@ -159,7 +184,7 @@ class BlocklyPropClient(tk.Tk):
 
         if BlocklyLogger.path is None:
             self.logfile.set(' ')
-            self.logger.info('Disk logging is inactive')
+            self.logger.info('Disk logging is disabled.')
         else:
             self.logfile.set(BlocklyLogger.path)
             self.logger.info('Disk log file location is: %s', BlocklyLogger.path)
@@ -188,9 +213,12 @@ class BlocklyPropClient(tk.Tk):
         self.logger.info('Connect state is: %s', self.connected)
 
         if self.connected:
+            self.logger.debug('Terminating server process')
             BlocklyServer.stop(self.q)
             self.server_process.terminate()
             self.connected = False
+
+            # Set the connect/disconnect button text to the alternate state
             self.btn_connect['text'] = "Connect"
         else:
             # read entered values and start server
@@ -198,7 +226,6 @@ class BlocklyPropClient(tk.Tk):
                 target=BlocklyServer.main,
                 args=(int(self.port.get()), self.version, self.q))
 
-           # self.server_process = threading.Thread(target=BlocklyServer.main, args=(int(self.port.get()), self.version)) #, kwargs={'out':self.stdoutToQueue})
             self.server_process.start()
 
             self.connected = True
@@ -222,23 +249,27 @@ class BlocklyPropClient(tk.Tk):
     def handle_client_code_browser(self):
         webbrowser.open_new('http://github.com/parallaxinc/BlocklyPropClient')
 
+    # Open the application About dialog box
     def about_info(self):
         try:
             with open(self.appdir + '/about.txt', 'r') as about_file:
                 tkMessageBox.showinfo("About BlocklyProp", about_file.read())
-        except:
+        except OSError:
             tkMessageBox.showinfo("About BlocklyProp", "About file is missing")
 
+    # Open the application Quit dialog box and process user selection
     def handle_close(self):
         self.logger.info('Opening Quit dialog')
 
         if tkMessageBox.askokcancel("Quit?", "Are you sure you want to quit?"):
-            self.logger.info('Quitting')
             # stop server if running
             if self.connected:
-               # BlocklyServer.stop()
+                self.logger.info('Terminating server process')
                 self.server_process.terminate()
+
             self.quit()
+        else:
+            self.logger.debug('Cancelling application quit request')
 
     def text_catcher(self):
         try:
@@ -252,8 +283,8 @@ class BlocklyPropClient(tk.Tk):
                     self.ent_log.yview_pickplace("end")
                     self.ent_log['state'] = 'disabled'
         except EOFError:
-            print('EOF Error')
-#            self.logger.error('Unexpected end of file encountered')
+            # print('EOF Error')
+            self.logger.error('Unexpected end of file encountered')
 
 
 if __name__ == '__main__':
