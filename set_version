@@ -1,4 +1,24 @@
 #!/bin/sh --
+#
+# This script sets version number entries in various files in the BlocklyPropClient project.
+#
+# Usage: $ ./set_version 1.2.3
+
+#
+# Error if no version string declared
+#
+if [ $1X == X ]
+then
+    echo "ERROR: Must specify a version number.  Ex: \$ $0 1.2.3"
+    exit 1
+fi
+
+
+#
+# Get version string
+#
+VERSION=$1
+
 
 #
 # FindAndSetVersion function
@@ -13,14 +33,12 @@
 function FindAndSetVersion {
 if grep -q -E ${VERSIONPATTERN} ${VERSIONFILE} ; then
     if sed -i.bak -E "s/${VERSIONPATTERN}/${VERSIONSTRING}/" ${VERSIONFILE} ; then
-        echo "Updated file \"${VERSIONFILE}\" to include \"${VERSIONSTRING}\""
+        echo "Updated file \"${VERSIONFILE}\" to include: ${VERSIONSTRING}"
     fi
 else
     echo "ERROR: Unable to find version string in file \"${VERSIONFILE}\""
 fi
 }
-
-VERSION=0.5.3
 
 #
 # Adjust BlocklyPropClient.py file
