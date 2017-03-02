@@ -43,8 +43,7 @@ coll = COLLECT(exe,
 app = BUNDLE(coll,
              name='BlocklyPropClient.app',
              icon='BlocklyPropClient.icns',
-             bundle_identifier='com.ParallaxInc.BlocklyPropClient',
-             info_plist={'CFBundleShortVersionString': '0.5.3'})
+             bundle_identifier='com.ParallaxInc.BlocklyPropClient')
 
 # From Analysis
 #            pathex=['/Users/<username>/PythonProjects/BlocklyPropClient'],
