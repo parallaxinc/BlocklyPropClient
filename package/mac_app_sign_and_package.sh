@@ -244,6 +244,22 @@ fi
 echo
 
 #
+# Set bundle version number (in Info.plist)
+#
+if [[ -e ${DISTRIBUTION}${APP_BUNDLE} ]]
+then
+    if [[ -e ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist ]]
+    then
+       echo "Attempting to update bundle's Info.plist to version: \"${VERSION}\""
+       sed s_\<string\>0.0.0\<\/string\>_\<string\>${VERSION}\<\/string\>_ ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist > ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info2.plist
+       rm ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist
+       mv ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info2.plist ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist
+    fi
+fi
+
+echo
+
+#
 # Attempt to deeply codesign the app bundle
 #
 echo "Code signing the application bundle: ${DISTRIBUTION}${APP_BUNDLE} with identity: \"${APP_IDENTITY}\""
