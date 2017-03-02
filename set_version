@@ -2,14 +2,14 @@
 #
 # This script sets version number entries in various files in the BlocklyPropClient project.
 #
-# Usage: $ ./set_version 1.2.3
+# Usage: $ ./set_version "1.2.3"
 
 #
 # Error if no version string declared
 #
 if [ $1X == X ]
 then
-    echo "ERROR: Must specify a version number.  Ex: \$ $0 1.2.3"
+    echo "ERROR: Must specify a version number.  Ex: \$ $0 \"1.2.3\""
     exit 1
 fi
 
