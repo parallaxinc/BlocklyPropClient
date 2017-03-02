@@ -20,14 +20,14 @@ else
 fi
 }
 
-VERSION=0.5.6
+VERSION=0.5.3
 
 #
 # Adjust BlocklyPropClient.py file
 #
-VERSIONFILE =BlocklyPropClient.py
-VERSIONPATTERN =[vV][eE][rR][sS][iI][oO][nN][[:blank:]]*=[[:blank:]]*\"[0-9]+\.[0-9]+\.[0-9]+\"
-VERSIONSTRING ="VERSION = \"${VERSION}\""
+VERSIONFILE=BlocklyPropClient.py
+VERSIONPATTERN=[vV][eE][rR][sS][iI][oO][nN][[:blank:]]*=[[:blank:]]*\"[0-9]+\.[0-9]+\.[0-9]+\"
+VERSIONSTRING="VERSION = \"${VERSION}\""
 
 FindAndSetVersion
 
@@ -35,9 +35,9 @@ FindAndSetVersion
 #
 # Adjust about.txt file
 #
-VERSIONFILE =about.txt
-VERSIONPATTERN =[vV][eE][rR][sS][iI][oO][nN]:[[:blank:]]*v[[:blank:]]*[0-9]+\.[0-9]+\.[0-9]+
-VERSIONSTRING ="Version: v${VERSION}"
+VERSIONFILE=about.txt
+VERSIONPATTERN=[vV][eE][rR][sS][iI][oO][nN]:[[:blank:]]*v[[:blank:]]*[0-9]+\.[0-9]+\.[0-9]+
+VERSIONSTRING="Version: v${VERSION}"
 
 FindAndSetVersion
 
@@ -45,8 +45,8 @@ FindAndSetVersion
 #
 # Adjust package/blocklypropclient-installer.iss file
 #
-VERSIONFILE =package/blocklypropclient-installer.iss
-VERSIONPATTERN =[mM][yY][aA][pP][pP][vV][eE][rR][sS][iI][oO][nN][[:blank:]]+\"[0-9]+\.[0-9]+\.[0-9]+\"
-VERSIONSTRING ="MyAppVersion \"${VERSION}\""
+VERSIONFILE=package/blocklypropclient-installer.iss
+VERSIONPATTERN=[mM][yY][aA][pP][pP][vV][eE][rR][sS][iI][oO][nN][[:blank:]]+\"[0-9]+\.[0-9]+\.[0-9]+\"
+VERSIONSTRING="MyAppVersion \"${VERSION}\""
 
 FindAndSetVersion
