@@ -250,11 +250,20 @@ if [[ -e ${DISTRIBUTION}${APP_BUNDLE} ]]
 then
     if [[ -e ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist ]]
     then
-       echo "Attempting to update bundle's Info.plist to version: \"${VERSION}\""
-       sed s_\<string\>0.0.0\<\/string\>_\<string\>${VERSION}\<\/string\>_ ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist > ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info2.plist
-       rm ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist
-       mv ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info2.plist ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist
+        if sed -i.bak s_\<string\>0.0.0\<\/string\>_\<string\>${VERSION}\<\/string\>_ ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist > ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info2.plist
+        then
+            echo "Set bundle's Info.plist to version: \"${VERSION}\""
+        else
+            echo "[Error] Could not set bundle's version in Info.plist."
+            exit 1
+        fi
+    else
+        echo "[Error] Application bundle does not include an Info.plist file."
+        exit 1
     fi
+else
+    echo "[Error] Application bundle not found: ${DISTRIBUTION}${APP_BUNDLE}"
+    exit 1
 fi
 
 echo
