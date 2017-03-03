@@ -1,6 +1,7 @@
 #!/bin/sh --
 #
 # This script sets version number entries in various files in the BlocklyPropClient project.
+# Works in Ubuntu and OS X.
 #
 # Usage: $ ./set_version "1.2.3"
 
@@ -8,8 +9,8 @@
 #
 # Error if no version string declared
 #
+# if [ $1X == X ]     <-- this doesn't work in Ubuntu
 if [ -z "$1" ]
-#if [ $1X == X ]     <-- this doesn't work in Ubuntu
 then
     echo "ERROR: Must specify a version number.  Ex: \$ $0 \"1.2.3\""
     exit 1
@@ -32,8 +33,8 @@ VERSION=$1
 #       grep and sed, must use an expanded pattern for text where each letter is expressed in both upper/lower case.
 #       ex: Ver should be [vV][eE][rR]  
 #
+# function FindAndSetVersion {     <-- this doesn't work in Ubuntu
 FindAndSetVersion() {
-#function FindAndSetVersion {     <-- this doesn't work in Ubuntu
 if grep -q -E ${VERSIONPATTERN} ${VERSIONFILE} ; then
     if sed -i.bak -E "s/${VERSIONPATTERN}/${VERSIONSTRING}/" ${VERSIONFILE} ; then
         echo "Updated file \"${VERSIONFILE}\" to include: ${VERSIONSTRING}"
