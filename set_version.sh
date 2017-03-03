@@ -46,7 +46,7 @@ fi
 
 
 #
-# Adjust BlocklyPropClient.py file
+# Adjust BlocklyPropClient.py file - [format: VERSION = "#.#.#"]
 #
 VERSIONFILE=BlocklyPropClient.py
 VERSIONPATTERN=[vV][eE][rR][sS][iI][oO][nN][[:blank:]]*=[[:blank:]]*\"[0-9]+\.[0-9]+\.[0-9]+\"
@@ -56,7 +56,7 @@ FindAndSetVersion
 
 
 #
-# Adjust about.txt file
+# Adjust about.txt file - [format: Version: v#.#.#]
 #
 VERSIONFILE=about.txt
 VERSIONPATTERN=[vV][eE][rR][sS][iI][oO][nN]:[[:blank:]]*v[[:blank:]]*[0-9]+\.[0-9]+\.[0-9]+
@@ -66,7 +66,7 @@ FindAndSetVersion
 
 
 #
-# Adjust package/blocklypropclient-installer.iss file
+# Adjust package/blocklypropclient-installer.iss file - [format: MyAppVersion "#.#.#"]
 #
 VERSIONFILE=package/blocklypropclient-installer.iss
 VERSIONPATTERN=[mM][yY][aA][pP][pP][vV][eE][rR][sS][iI][oO][nN][[:blank:]]+\"[0-9]+\.[0-9]+\.[0-9]+\"
