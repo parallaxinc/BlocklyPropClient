@@ -6,6 +6,7 @@ venv/
 VPython/
 *.app
 *.pkg
+*.bak
 
 #################
 ## Eclipse
