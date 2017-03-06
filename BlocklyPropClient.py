@@ -36,7 +36,7 @@ PORT = 6009
 # Please verify that the version number in the local about.txt and the
 # ./package/win0resources/blocklypropclient-installer.iss
 # -----------------------------------------------------------------------
-VERSION = "0.5.3"
+VERSION = "0.5.4"
 
 
 # Enable logging for functions outside of the class definition
