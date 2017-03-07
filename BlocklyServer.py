@@ -1,5 +1,6 @@
 import base64
 import os
+import sys
 import tempfile
 import logging
 
@@ -26,7 +27,12 @@ class BlocklyServer(object):
 
         self.version = version
         self.queue = queue
+        self.appdir = os.path.dirname(sys.argv[0])
+        self.logger.debug("Application started from: %s", self.appdir)
+
         queue.put((10, 'INFO', 'Server started'))
+
+    propellerLoad = PropellerLoad()
 
     @cherrypy.expose()
     @cherrypy.tools.json_out()
@@ -57,13 +63,13 @@ class BlocklyServer(object):
             for port in ports:
                 self.logger.debug('Port %s discovered.', port)
                 if ' bt ' not in port.lower() and 'bluetooth' not in port.lower():
-                    self.logger.debug('Port %2 appended to list.', port)
                     filtered_ports.append(port)
+                    self.logger.debug("Port %2 appended to list.", port)
             return filtered_ports
         else:
             # No useable ports detected. Need to determine how the browser
             # handles an empty list of available ports.
-            self.logger.debug('No ports detected. Replying with /dev/null')
+            self.logger.debug("No ports detected. Replying with /dev/null")
             return '/dev/null'
 
 
@@ -72,20 +78,27 @@ class BlocklyServer(object):
     @cherrypy.tools.allow(methods=['POST'])
     def load(self, action, binary, extension, comport=None):
         if action is None:
-            logger = logging.getLogger('blockly.server')
-            logger.error('Load action is undefined.')
+            self.logger.error('Load action is undefined.')
+            return {
+                'message': 'Load action is undefined',
+                'success': False
+            }
 
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
 
         self.logger.debug('Writing program payload to temp file.')
+
         binary_file = tempfile.NamedTemporaryFile(suffix=extension, delete=False)
         binary_file.write(base64.b64decode(binary))
         binary_file.close()
+
         self.logger.debug('%s saved.', binary_file.name)
 
         self.logger.debug('Loading program to device.')
+
         (success, out, err) = self.propellerLoad.load(action, binary_file, comport)
         self.queue.put((10, 'INFO', 'Application loaded (%s)' % action))
+
         self.logger.info('Application load complete.')
 
         os.remove(binary_file.name)
@@ -101,8 +114,6 @@ class BlocklyServer(object):
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
         self.queue.put((10, 'INFO', 'Serial socket set up'))
         handler = cherrypy.request.ws_handler
-
-    propellerLoad = PropellerLoad()
 
 
 def main(port, version, queue):
