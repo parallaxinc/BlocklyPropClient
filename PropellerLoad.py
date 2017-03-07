@@ -7,15 +7,23 @@ import logging
 
 __author__ = 'Michel'
 
+module_logger = logging.getLogger('blockly.loader')
+
 
 class PropellerLoad:
-
     loading = False
     ports = []
 
     def __init__(self):
         self.logger = logging.getLogger('blockly.loader')
         self.logger.info('Creating loader logger.')
+
+        # Find the path to the application launch directory
+        self.appdir = os.path.dirname(sys.argv[0])
+        self.logger.debug("Application running from: %s", self.appdir)
+
+#        if not self.appdir:
+#            self.appdir = os.getcwd()
 
         self.propeller_load_executables = {
             "Windows":  "/propeller-tools/windows/propeller-load.exe",
@@ -33,9 +41,6 @@ class PropellerLoad:
             self.logger.error('The %s platform is not supported at this time.', platform.system())
             print("Unsupported", platform.system() + " is currently unsupported")
             exit(1)
-
-        self.appdir = os.getcwd()
-        # self.appdir = os.path.dirname(sys.argv[0])
 
     def get_ports(self):
         self.logger.info('Getting ports')
@@ -63,8 +68,11 @@ class PropellerLoad:
             return ports
 
     def load(self, action, file_to_load, com_port):
-        self.logger.info("Loading code to device")
         self.loading = True
+
+        # Patch until we figure out why the __init__ is not getting called
+        if not self.appdir or self.appdir == '':
+            self.appdir = os.path.dirname(sys.argv[0])
 
         executable = self.appdir + self.propeller_load_executables[platform.system()]
         self.logger.debug('Loader executable path is: %s)', executable)
@@ -94,6 +102,8 @@ class PropellerLoad:
 
             out, err = process.communicate()
             self.logger.info("Load result is: %s", process.returncode)
+            self.logger.debug("Load error string: %s", err)
+            self.logger.debug("Load output string: %s", out)
 
             if process.returncode == 0:
                 success = True
@@ -101,7 +111,8 @@ class PropellerLoad:
                 success = False
 
             self.loading = False
-            return (success, out or '', err or '')
+            return success, out or '', err or ''
+
         except OSError as ex:
             self.logger.error("%s", ex.message)
 
