@@ -250,9 +250,10 @@ if [[ -e ${DISTRIBUTION}${APP_BUNDLE} ]]
 then
     if [[ -e ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist ]]
     then
-        if sed -i.bak s_\<string\>0.0.0\<\/string\>_\<string\>${VERSION}\<\/string\>_ ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist > ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info2.plist
+        if sed -i.bak s_\<string\>0.0.0\<\/string\>_\<string\>${VERSION}\<\/string\>_ ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist
         then
             echo "Set bundle's Info.plist to version: \"${VERSION}\""
+            rm ${DISTRIBUTION}${APP_BUNDLE}/Contents/Info.plist.bak
         else
             echo "[Error] Could not set bundle's version in Info.plist."
             exit 1
