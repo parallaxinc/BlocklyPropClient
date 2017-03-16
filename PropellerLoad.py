@@ -18,12 +18,13 @@ class PropellerLoad:
         self.logger = logging.getLogger('blockly.loader')
         self.logger.info('Creating loader logger.')
 
-        # Find the path to the application launch directory
+        # Find the path from which application was launched
         # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
 	self.appdir = os.path.dirname(os.path.realpath(__file__))
-        if self.appdir == "":
+        if self.appdir == "" or self.appdir == "/":
+	    # launch path is blank; try extracting from argv
             self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
-        self.logger.debug("Application running from: %s", self.appdir)
+        self.logger.debug("PropellerLoad.py: Application running from: %s", self.appdir)
 
         self.propeller_load_executables = {
             "Windows":  "/propeller-tools/windows/propeller-load.exe",
@@ -72,9 +73,10 @@ class PropellerLoad:
 
         # Patch until we figure out why the __init__ is not getting called
 	if not self.appdir or self.appdir == '':
-	    # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
+            # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
 	    self.appdir = os.path.dirname(os.path.realpath(__file__))
-            if self.appdir == "":
+            if self.appdir == "" or self.appdir == "/":
+	        # launch path is blank; try extracting from argv
                 self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
         executable = self.appdir + self.propeller_load_executables[platform.system()]
