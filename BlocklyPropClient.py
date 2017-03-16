@@ -65,9 +65,10 @@ class BlocklyPropClient(tk.Tk):
         self.connected = False
 
         # Path to where application was launched
-	# self.appdir = os.path.dirname(sys.argv[0])
-	# self.appdir = os.getcwd()   #works
+        # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
 	self.appdir = os.path.dirname(os.path.realpath(__file__))
+        if self.appdir == "":
+            self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
 	self.logger.info('Logging is enabled')
 	self.logger.info('Application launched from %s', self.appdir)
 

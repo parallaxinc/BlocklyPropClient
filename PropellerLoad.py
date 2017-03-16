@@ -19,13 +19,11 @@ class PropellerLoad:
         self.logger.info('Creating loader logger.')
 
         # Find the path to the application launch directory
-	# self.appdir = os.path.dirname(sys.argv[0])
-	# self.appdir = os.getcwd()   # works
+        # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
 	self.appdir = os.path.dirname(os.path.realpath(__file__))
+        if self.appdir == "":
+            self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
         self.logger.debug("Application running from: %s", self.appdir)
-
-#        if not self.appdir:
-#            self.appdir = os.getcwd()
 
         self.propeller_load_executables = {
             "Windows":  "/propeller-tools/windows/propeller-load.exe",
@@ -73,9 +71,11 @@ class PropellerLoad:
         self.loading = True
 
         # Patch until we figure out why the __init__ is not getting called
-        if not self.appdir or self.appdir == '':
-	    # self.appdir = os.path.dirname(sys.argv[0])
+	if not self.appdir or self.appdir == '':
+	    # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
 	    self.appdir = os.path.dirname(os.path.realpath(__file__))
+            if self.appdir == "":
+                self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
         executable = self.appdir + self.propeller_load_executables[platform.system()]
         self.logger.debug('Loader executable path is: %s)', executable)
