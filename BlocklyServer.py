@@ -27,7 +27,8 @@ class BlocklyServer(object):
 
         self.version = version
         self.queue = queue
-        self.appdir = os.path.dirname(sys.argv[0])
+	# self.appdir = os.path.dirname(sys.argv[0])
+	self.appdir = os.path.dirname(os.path.realpath(__file__))
         self.logger.debug("Application started from: %s", self.appdir)
 
         queue.put((10, 'INFO', 'Server started'))
