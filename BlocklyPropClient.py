@@ -34,7 +34,7 @@ PORT = 6009
 # NOTE:
 #
 # Please verify that the version number in the local about.txt and the
-# ./package/win0resources/blocklypropclient-installer.iss
+# ./package/win-resources/blocklypropclient-installer.iss matches this.
 # -----------------------------------------------------------------------
 VERSION = "0.5.4"
 
@@ -64,10 +64,15 @@ class BlocklyPropClient(tk.Tk):
         self.app_version = "0.0"
         self.connected = False
 
-        # Path to where application was launched
-        self.appdir = os.path.dirname(sys.argv[0])
-        self.logger.info('Logging is enabled')
-        self.logger.info('Application launched from %s', self.appdir)
+        # Find the path from which application was launched
+        # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
+	self.appdir = os.path.dirname(os.path.realpath(__file__))
+        if self.appdir == "" or self.appdir == "/":
+	    # launch path is blank; try extracting from argv
+            self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
+
+	self.logger.info('Logging is enabled')
+	self.logger.info('BlocklyPropClient.py: Application launched from %s', self.appdir)
 
         # initialize config variables
         self.ip_address = tk.StringVar()

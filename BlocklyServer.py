@@ -27,8 +27,15 @@ class BlocklyServer(object):
 
         self.version = version
         self.queue = queue
-        self.appdir = os.path.dirname(sys.argv[0])
-        self.logger.debug("Application started from: %s", self.appdir)
+
+        # Find the path from which application was launched
+        # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
+	self.appdir = os.path.dirname(os.path.realpath(__file__))
+        if self.appdir == "" or self.appdir == "/":
+	    # launch path is blank; try extracting from argv
+            self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
+
+        self.logger.debug("BlocklyServer.py: Application started from: %s", self.appdir)
 
         queue.put((10, 'INFO', 'Server started'))
 
