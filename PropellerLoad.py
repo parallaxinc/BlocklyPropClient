@@ -27,10 +27,10 @@ class PropellerLoad:
         self.logger.debug("PropellerLoad.py: Application running from: %s", self.appdir)
 
         self.propeller_load_executables = {
-            "Windows":  "/propeller-tools/windows/propeller-load.exe",
-            "Linux":    "/propeller-tools/linux/propeller-load",
-            "MacOS":    "/propeller-tools/mac/propeller-load",
-            "Darwin":   "/propeller-tools/mac/propeller-load"
+            "Windows":  "/propeller-tools/windows/proploader.exe",
+            "Linux":    "/propeller-tools/linux/proploader",
+            "MacOS":    "/propeller-tools/mac/proploader",
+            "Darwin":   "/propeller-tools/mac/proploader"
         }
 
         self.load_actions = {
@@ -40,7 +40,7 @@ class PropellerLoad:
 
         if not platform.system() in self.propeller_load_executables:
             self.logger.error('The %s platform is not supported at this time.', platform.system())
-            print("Unsupported", platform.system() + " is currently unsupported")
+            print(platform.system() + " is currently unsupported")
             exit(1)
 
     def get_ports(self):
@@ -72,7 +72,7 @@ class PropellerLoad:
         self.loading = True
 
         # Patch until we figure out why the __init__ is not getting called
-	if not self.appdir or self.appdir == '':
+	if not self.appdir or self.appdir == "" or self.appdir == "/":
             # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
 	    self.appdir = os.path.dirname(os.path.realpath(__file__))
             if self.appdir == "" or self.appdir == "/":
