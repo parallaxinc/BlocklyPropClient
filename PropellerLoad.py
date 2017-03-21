@@ -12,7 +12,10 @@ module_logger = logging.getLogger('blockly.loader')
 
 class PropellerLoad:
     loading = False
+    # COM & WiFi-Name ports list
     ports = []
+    # Full WiFi ports list
+    wports = []
 
     def __init__(self):
         self.logger = logging.getLogger('blockly.loader')
@@ -74,13 +77,17 @@ class PropellerLoad:
             process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-W"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = process.communicate()
             if err is '':
-                # Success 
-                wport = strBetween(out, "Name: '", "', IP:")
+                # Success
+                wports = out.splitlines()
+                # 
+                wnames = []
+                for i in range(len(wports)):
+                  wnames.extend(strBetween(wports[i], "Name: '", "', IP:"))
             else:
                 # Failure
                 self.logger.debug('WiFi Port request returned %s', err)
 
-            self.ports.extend(wport)
+            self.ports.extend(wports)
 
 #            ports = [port for (port, driver, usb) in list_ports.comports()]
 
