@@ -49,24 +49,44 @@ class PropellerLoad:
         if self.loading:
             return self.ports
 
+        self.logger.info("Enumerating host ports")
+
         if platform.system() == "Windows":
-            self.logger.info("Enumerating Windows ports")
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
             process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
             out, err = process.communicate()
             self.logger.debug('Loader complete: Error code %s returned.', err)
             self.ports = out.splitlines()
             return self.ports
         else:
-            self.logger.info("Enumerating host ports")
+            # Get COM ports
+            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = process.communicate()
+            if err is '':
+                # Success
+                self.ports = out.splitlines()
+            else:
+                # Failure
+                self.logger.debug('COM Port request returned %s', err)
+ 
+            # Get WiFi ports
+            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-W"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = process.communicate()
+            if err is '':
+                # Success 
+                wport = strBetween(out, "Name: '", "', IP:")
+            else:
+                # Failure
+                self.logger.debug('WiFi Port request returned %s', err)
 
-            ports = [port for (port, driver, usb) in list_ports.comports()]
-            self.logger.debug('Port count: %s', len(ports))
+            self.ports.extend(wport)
 
-            self.ports = ports
-            return ports
+#            ports = [port for (port, driver, usb) in list_ports.comports()]
+
+            self.logger.debug('Port count: %s', len(self.ports))
+
+            return self.ports
 
     def load(self, action, file_to_load, com_port):
         self.loading = True
@@ -130,3 +150,26 @@ def resource_path(relative):
         ),
         relative
     )
+
+
+def strBetween(string, startStr, endStr):
+# Return substring from string in between startStr and endStr, or None if no match
+    # Find startStr
+    sPos = string.find(startStr)
+    if sPos == -1: return None
+    sPos += len(startStr)
+    # Find endStr
+    ePos = string.find(endStr, sPos)
+    if ePos == -1: return None
+    # Return middle
+    return [string[sPos:ePos]]
+
+
+def strAfter(string, startStr):
+# Return substring from string after startStr, or None if no match
+    # Find startStr
+    sPos = string.find(startStr)
+    if sPos == -1: return None
+    sPos += len(startStr)
+    # Return string after
+    return [string[sPos:-1]]
