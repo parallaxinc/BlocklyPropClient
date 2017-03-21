@@ -52,7 +52,7 @@ class PropellerLoad:
         if self.loading:
             return self.ports
 
-        self.logger.info("Enumerating host ports")
+        self.logger.info("Refreshing ports list")
 
         if platform.system() == "Windows":
             startupinfo = subprocess.STARTUPINFO()
@@ -73,21 +73,26 @@ class PropellerLoad:
                 # Failure
                 self.logger.debug('COM Port request returned %s', err)
  
-            # Get WiFi ports
+            # Get Wi-Fi ports
             process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-W"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = process.communicate()
             if err is '':
                 # Success
-                wports = out.splitlines()
-                # 
+                self.wports = out.splitlines()
+                # Extract Wi-Fi module names
                 wnames = []
-                for i in range(len(wports)):
-                  wnames.extend(strBetween(wports[i], "Name: '", "', IP:"))
+                for i in range(len(self.wports)):
+                  wnames.extend(strBetween(self.wports[i], "Name: '", "', IP:"))
             else:
                 # Failure
                 self.logger.debug('WiFi Port request returned %s', err)
 
-            self.ports.extend(wports)
+            if "Jeff" in self.wports:
+                self.logger.debug('Found named port!')
+            else:
+                self.logger.debug('Can not find named port!')
+
+            self.ports.extend(wnames)
 
 #            ports = [port for (port, driver, usb) in list_ports.comports()]
 
@@ -113,10 +118,16 @@ class PropellerLoad:
         executing_data.extend(self.load_actions[action]["compile-options"])
         self.logger.debug('Loader commandline is: %s', executing_data)
 
+        # Find requested com_port
         if com_port is not None:
-            self.logger.info("Talking to com port.")
-            executing_data.append("-p")
-            executing_data.append(com_port.encode('ascii', 'ignore'))
+            self.logger.info("Requesting port.")
+            self.logger.debug("Current Wi-Fi ports: %s", self.wports) 
+            if [com_port] in self.wports:
+                executing_data.append("-i")
+                executing_data.append(strBetween(self.wports[self.wports.index(com_port)], ", IP: ", ", MAC: ").encode('ascii', 'ignore'))
+            else:
+                executing_data.append("-p")
+                executing_data.append(com_port.encode('ascii', 'ignore'))
 
         executing_data.append(file_to_load.name.encode('ascii', 'ignore').replace('\\', '/'))
 
