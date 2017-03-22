@@ -82,15 +82,10 @@ class PropellerLoad:
                 # Extract Wi-Fi module names
                 wnames = []
                 for i in range(len(self.wports)):
-                  wnames.extend(strBetween(self.wports[i], "Name: '", "', IP:"))
+                  wnames.extend([strBetween(self.wports[i], "Name: '", "', IP:")])
             else:
                 # Failure
                 self.logger.debug('WiFi Port request returned %s', err)
-
-            if "Jeff" in self.wports:
-                self.logger.debug('Found named port!')
-            else:
-                self.logger.debug('Can not find named port!')
 
             self.ports.extend(wnames)
 
@@ -122,10 +117,14 @@ class PropellerLoad:
         if com_port is not None:
             self.logger.info("Requesting port.")
             self.logger.debug("Current Wi-Fi ports: %s", self.wports) 
-            if [com_port] in self.wports:
+
+            targetWiFi = [l for l in self.wports if isWiFiName(l, com_port)]
+            if len(targetWiFi) == 1:
+                self.logger.debug('%s is at %s', com_port, getWiFiIP(targetWiFi[0]))            
                 executing_data.append("-i")
-                executing_data.append(strBetween(self.wports[self.wports.index(com_port)], ", IP: ", ", MAC: ").encode('ascii', 'ignore'))
+                executing_data.append(getWiFiIP(targetWiFi[0]).encode('ascii', 'ignore'))
             else:
+                self.logger.debug('%s is not a Wi-Fi port', com_port)
                 executing_data.append("-p")
                 executing_data.append(com_port.encode('ascii', 'ignore'))
 
@@ -170,6 +169,26 @@ def resource_path(relative):
     )
 
 
+def isWiFiName(string, wifiName):
+# Return True if string contains Wi-Fi Module record named wifiName
+    return getWiFiName(string) == wifiName
+
+
+def getWiFiName(string):
+# Return Wi-Fi Module Name from string, or None if not found
+    return strBetween(string, "Name: '", "', IP: ")
+
+
+def getWiFiIP(string):
+# Return Wi-Fi Module IP address from string, or None if not found
+    return strBetween(string, "', IP: ", ", MAC: ")
+
+
+def getWiFiMAC(string):
+# Return Wi-Fi Module MAC address from string, or None if not found
+    return strAfter(string, ", MAC: ")
+
+
 def strBetween(string, startStr, endStr):
 # Return substring from string in between startStr and endStr, or None if no match
     # Find startStr
@@ -180,7 +199,7 @@ def strBetween(string, startStr, endStr):
     ePos = string.find(endStr, sPos)
     if ePos == -1: return None
     # Return middle
-    return [string[sPos:ePos]]
+    return string[sPos:ePos]
 
 
 def strAfter(string, startStr):
@@ -190,4 +209,4 @@ def strAfter(string, startStr):
     if sPos == -1: return None
     sPos += len(startStr)
     # Return string after
-    return [string[sPos:-1]]
+    return string[sPos:-1]
