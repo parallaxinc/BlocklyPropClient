@@ -28,7 +28,7 @@ class PropellerLoad:
         if self.appdir == "" or self.appdir == "/":
             # launch path is blank; try extracting from argv
             self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
-        self.logger.debug("PropellerLoad.py: Application running from: %s", self.appdir)
+        self.logger.debug("Application running from: %s", self.appdir)
 
         self.loaderExe = {
             "Windows":  "/propeller-tools/windows/proploader.exe",
@@ -48,10 +48,6 @@ class PropellerLoad:
             exit(1)
 
 
-    def loaderxx(temporary):
-        return
-
-
     def get_ports(self):
         self.logger.info('Getting ports')
 
@@ -61,14 +57,14 @@ class PropellerLoad:
         self.logger.info("Refreshing ports list")
 
         # Get COM ports
-        success, out, err = loaderxx("-P")
+        success, out, err = loader(self, "-P")
         if success:
             self.ports = out.splitlines()
         else:
             self.logger.debug('COM Port request returned %s', err)
  
         # Get Wi-Fi ports
-        success, out, err = loaderxx("-W")
+        success, out, err = loader(self, "-W")
         if success:
             self.wports = out.splitlines()
             # Extract Wi-Fi module names and sort them
@@ -83,50 +79,6 @@ class PropellerLoad:
         self.logger.debug('Port count: %s', len(self.ports))
 
         return self.ports
-
-
-
-#        if platform.system() == "Windows":
-#            startupinfo = subprocess.STARTUPINFO()
-#            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-#            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
-#            out, err = process.communicate()
-#            self.logger.debug('Loader complete: Error code %s returned.', err)
-#            self.ports = out.splitlines()
-#            return self.ports
-#        else:
-#            # Get COM ports
-#            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#            out, err = process.communicate()
-#            if err is '':
-#                # Success
-#                self.ports = out.splitlines()
-#            else:
-#                # Failure
-#                self.logger.debug('COM Port request returned %s', err)
-# 
-#            # Get Wi-Fi ports
-#            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-W"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#            out, err = process.communicate()
-#            if err is '':
-#                # Success
-#                self.wports = out.splitlines()
-#                # Extract Wi-Fi module names and sort them
-#                wnames = []
-#                for i in range(len(self.wports)):
-#                  wnames.extend([getWiFiName(self.wports[i])])
-#                wnames.sort(None, None, False)
-#            else:
-#                # Failure
-#                self.logger.debug('WiFi Port request returned %s', err)
-#
-#            self.ports.extend(wnames)
-#
-##            ports = [port for (port, driver, usb) in list_ports.comports()]
-#
-#            self.logger.debug('Port count: %s', len(self.ports))
-#
-#            return self.ports
 
 
     def load(self, action, file_to_load, com_port):
@@ -193,9 +145,7 @@ class PropellerLoad:
             self.logger.error("%s", ex.message)
 
 
-
-
-def loader(cmdOptions):
+def loader(self, cmdOptions):
     # Launch Propeller Loader with cmdOptions and return True/False, output and error string
     try:
         if platform.system() == "Windows":
@@ -210,7 +160,7 @@ def loader(cmdOptions):
         if process.returncode:
             self.logger.error("Error result: %s", process.returncode)
             self.logger.error("Error string: %s", err)
-        self.logger.debug("Load output string: %s", out)
+        self.logger.debug("Loader response: %s", out)
 
         if process.returncode == 0:
             success = True
