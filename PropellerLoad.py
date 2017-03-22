@@ -17,6 +17,7 @@ class PropellerLoad:
     # Full WiFi ports list
     wports = []
 
+
     def __init__(self):
         self.logger = logging.getLogger('blockly.loader')
         self.logger.info('Creating loader logger.')
@@ -29,22 +30,53 @@ class PropellerLoad:
             self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
         self.logger.debug("PropellerLoad.py: Application running from: %s", self.appdir)
 
-        self.propeller_load_executables = {
+        self.loaderExe = {
             "Windows":  "/propeller-tools/windows/proploader.exe",
             "Linux":    "/propeller-tools/linux/proploader",
             "MacOS":    "/propeller-tools/mac/proploader",
             "Darwin":   "/propeller-tools/mac/proploader"
         }
 
-        self.load_actions = {
+        self.loaderAction = {
             "RAM": {"compile-options": []},
             "EEPROM": {"compile-options": ["-e"]}
         }
 
-        if not platform.system() in self.propeller_load_executables:
+        if not platform.system() in self.loaderExe:
             self.logger.error('The %s platform is not supported at this time.', platform.system())
             print(platform.system() + " is currently unsupported")
             exit(1)
+
+
+    def loader(cmdOptions):
+        # Launch Propeller Loader with cmdOptions and return True/False, output and error string    
+    	try:
+    	    if platform.system() == "Windows":
+    	        startupinfo = subprocess.STARTUPINFO()
+    	        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    	        process = subprocess.Popen([self.appdir + self.loaderExe[platform.system()], cmdOptions], stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
+    	    else:
+    	        process = subprocess.Popen([self.appdir + self.loaderExe[platform.system()], cmdOptions], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    	    out, err = process.communicate()
+        
+    	    if process.returncode:
+    	        self.logger.error("Error result: %s", process.returncode)
+    	        self.logger.error("Error string: %s", err)
+    	    self.logger.debug("Load output string: %s", out)
+
+    	    if process.returncode == 0:
+    	        success = True
+    	    else:
+    	        success = False
+
+    	    return success, out or '', err or ''
+
+    	except OSError as ex:
+    	    self.logger.error("%s", ex.message)
+    	    return False, '', 'Exception: OSError'
+
+
 
     def get_ports(self):
         self.logger.info('Getting ports')
@@ -54,47 +86,74 @@ class PropellerLoad:
 
         self.logger.info("Refreshing ports list")
 
-        if platform.system() == "Windows":
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
-            out, err = process.communicate()
-            self.logger.debug('Loader complete: Error code %s returned.', err)
+        # Get COM ports
+	success, out, err = loader("-P")
+        if success:
             self.ports = out.splitlines()
-            return self.ports
         else:
-            # Get COM ports
-            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = process.communicate()
-            if err is '':
-                # Success
-                self.ports = out.splitlines()
-            else:
-                # Failure
-                self.logger.debug('COM Port request returned %s', err)
+            self.logger.debug('COM Port request returned %s', err)
  
-            # Get Wi-Fi ports
-            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-W"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = process.communicate()
-            if err is '':
-                # Success
-                self.wports = out.splitlines()
-                # Extract Wi-Fi module names and sort them
-                wnames = []
-                for i in range(len(self.wports)):
-                  wnames.extend([getWiFiName(self.wports[i])])
-                wnames.sort(None, None, False)
-            else:
-                # Failure
-                self.logger.debug('WiFi Port request returned %s', err)
+        # Get Wi-Fi ports
+	success, out, err = loader("-W")
+        if success:
+            self.wports = out.splitlines()
+            # Extract Wi-Fi module names and sort them
+            wnames = []
+            for i in range(len(self.wports)):
+              wnames.extend([getWiFiName(self.wports[i])])
+            wnames.sort(None, None, False)
+        else:
+            self.logger.debug('WiFi Port request returned %s', err)
 
-            self.ports.extend(wnames)
+        self.ports.extend(wnames)
+        self.logger.debug('Port count: %s', len(self.ports))
 
-#            ports = [port for (port, driver, usb) in list_ports.comports()]
+        return self.ports
 
-            self.logger.debug('Port count: %s', len(self.ports))
 
-            return self.ports
+
+#        if platform.system() == "Windows":
+#            startupinfo = subprocess.STARTUPINFO()
+#            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+#            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
+#            out, err = process.communicate()
+#            self.logger.debug('Loader complete: Error code %s returned.', err)
+#            self.ports = out.splitlines()
+#            return self.ports
+#        else:
+#            # Get COM ports
+#            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-P"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#            out, err = process.communicate()
+#            if err is '':
+#                # Success
+#                self.ports = out.splitlines()
+#            else:
+#                # Failure
+#                self.logger.debug('COM Port request returned %s', err)
+# 
+#            # Get Wi-Fi ports
+#            process = subprocess.Popen([self.appdir + self.propeller_load_executables[platform.system()], "-W"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#            out, err = process.communicate()
+#            if err is '':
+#                # Success
+#                self.wports = out.splitlines()
+#                # Extract Wi-Fi module names and sort them
+#                wnames = []
+#                for i in range(len(self.wports)):
+#                  wnames.extend([getWiFiName(self.wports[i])])
+#                wnames.sort(None, None, False)
+#            else:
+#                # Failure
+#                self.logger.debug('WiFi Port request returned %s', err)
+#
+#            self.ports.extend(wnames)
+#
+##            ports = [port for (port, driver, usb) in list_ports.comports()]
+#
+#            self.logger.debug('Port count: %s', len(self.ports))
+#
+#            return self.ports
+
 
     def load(self, action, file_to_load, com_port):
         self.loading = True
@@ -160,6 +219,13 @@ class PropellerLoad:
             self.logger.error("%s", ex.message)
 
 
+
+
+
+
+
+
+
 def resource_path(relative):
     return os.path.join(
         os.environ.get(
@@ -168,6 +234,8 @@ def resource_path(relative):
         ),
         relative
     )
+
+
 
 
 def isWiFiName(string, wifiName):
