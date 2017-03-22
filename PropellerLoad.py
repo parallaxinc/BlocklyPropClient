@@ -79,10 +79,11 @@ class PropellerLoad:
             if err is '':
                 # Success
                 self.wports = out.splitlines()
-                # Extract Wi-Fi module names
+                # Extract Wi-Fi module names and sort them
                 wnames = []
                 for i in range(len(self.wports)):
-                  wnames.extend([strBetween(self.wports[i], "Name: '", "', IP:")])
+                  wnames.extend([getWiFiName(self.wports[i])])
+                wnames.sort(None, None, False)
             else:
                 # Failure
                 self.logger.debug('WiFi Port request returned %s', err)
