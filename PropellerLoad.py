@@ -58,14 +58,14 @@ class PropellerLoad:
         self.logger.info("Generating ports list")
 
         # Get COM ports
-        success, out, err = loader(self, "-P")
+        success, out, err = loader(self, ["-P"])
         if success:
             self.ports = out.splitlines()
         else:
             self.logger.debug('COM Port request returned %s', err)
  
         # Get Wi-Fi ports
-        success, out, err = loader(self, "-W")
+        success, out, err = loader(self, ["-W"])
         if success:
             self.wports = out.splitlines()
             # Extract Wi-Fi module names and sort them
@@ -94,7 +94,11 @@ class PropellerLoad:
                 self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
         # Set command download to RAM or EEPROM and run afterwards
-        command = [self.loaderAction[action]["compile-options"], "-r"]
+        command = []
+        if self.loaderAction[action]["compile-options"] != "":
+            # if RAM/EEPROM compile-option not empty, add it to the list
+            command.extend([self.loaderAction[action]["compile-options"]])
+        command.extend(["-r"])
 
         # Add requested port
         if com_port is not None:
@@ -120,18 +124,25 @@ class PropellerLoad:
 
 def loader(self, cmdOptions):
     # Launch Propeller Loader with cmdOptions and return True/False, output and error string
+    # cmdOptions must be a list
     try:
-        self.logger.debug('Loader command: %s', self.appdir + self.loaderExe[platform.system()] + ' ' + str(cmdOptions))
+        # Form complete command line as a list: [path+exe, option {,more_options...} {, filename}]
+        cmdLine = [self.appdir + self.loaderExe[platform.system()]]
+        cmdLine.extend(cmdOptions)
 
+        self.logger.info('Running loader command: %s', cmdLine)
+
+        # Run command
         if platform.system() == "Windows":
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            process = subprocess.Popen([self.appdir + self.loaderExe[platform.system()], cmdOptions], stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
+            process = subprocess.Popen(cmdLine, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
         else:
-            process = subprocess.Popen([self.appdir + self.loaderExe[platform.system()], cmdOptions], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen(cmdLine, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         out, err = process.communicate()
 
+        # If error, log extra error detail
         if process.returncode:
             self.logger.error("Error result: %s - %s", process.returncode, err)
         self.logger.debug("Loader response: %s", out)
@@ -144,6 +155,7 @@ def loader(self, cmdOptions):
         return success, out or '', err or ''
 
     except OSError as ex:
+        # Exception; log error and return fail status
         self.logger.error("%s", ex.message)
         return False, '', 'Exception: OSError'
 
