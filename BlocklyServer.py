@@ -103,7 +103,7 @@ class BlocklyServer(object):
 
         self.logger.debug('Loading program to device.')
 
-        (success, out, err) = self.propellerLoad.load(action, binary_file, comport)
+        (success, out, err) = self.propellerLoad.download(action, binary_file, comport)
         self.queue.put((10, 'INFO', 'Application loaded (%s)' % action))
 
         self.logger.info('Application load complete.')

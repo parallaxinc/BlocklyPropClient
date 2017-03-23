@@ -38,8 +38,8 @@ class PropellerLoad:
         }
 
         self.loaderAction = {
-            "RAM": {"compile-options": []},
-            "EEPROM": {"compile-options": ["-e"]}
+            "RAM":    {"compile-options": ""},
+            "EEPROM": {"compile-options": "-e"}
         }
 
         if not platform.system() in self.loaderExe:
@@ -49,12 +49,13 @@ class PropellerLoad:
 
 
     def get_ports(self):
-        self.logger.info('Getting ports')
+        self.logger.info('Get ports')
 
+        # Return last results if we're currently downloading
         if self.loading:
             return self.ports
 
-        self.logger.info("Refreshing ports list")
+        self.logger.info("Generating ports list")
 
         # Get COM ports
         success, out, err = loader(self, "-P")
@@ -81,7 +82,7 @@ class PropellerLoad:
         return self.ports
 
 
-    def load(self, action, file_to_load, com_port):
+    def download(self, action, file_to_load, com_port):
         self.loading = True
 
         # Patch until we figure out why the __init__ is not getting called
@@ -92,62 +93,34 @@ class PropellerLoad:
                 # launch path is blank; try extracting from argv
                 self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
-        executable = self.appdir + self.propeller_load_executables[platform.system()]
-        self.logger.debug('Loader executable path is: %s)', executable)
+        # Set command download to RAM or EEPROM and run afterwards
+        command = self.loaderAction[action]["compile-options"] + "-r"
 
-        executing_data = [executable, "-r"]
-        executing_data.extend(self.load_actions[action]["compile-options"])
-        self.logger.debug('Loader commandline is: %s', executing_data)
-
-        # Find requested com_port
+        # Add requested port
         if com_port is not None:
-            self.logger.info("Requesting port.")
-            self.logger.debug("Current Wi-Fi ports: %s", self.wports) 
-
             targetWiFi = [l for l in self.wports if isWiFiName(l, com_port)]
             if len(targetWiFi) == 1:
-                self.logger.debug('%s is at %s', com_port, getWiFiIP(targetWiFi[0]))            
-                executing_data.append("-i")
-                executing_data.append(getWiFiIP(targetWiFi[0]).encode('ascii', 'ignore'))
+                self.logger.debug('Requested port %s is at %s', com_port, getWiFiIP(targetWiFi[0]))            
+                command += " -i " + getWiFiIP(targetWiFi[0]).encode('ascii', 'ignore')
             else:
-                self.logger.debug('%s is not a Wi-Fi port', com_port)
-                executing_data.append("-p")
-                executing_data.append(com_port.encode('ascii', 'ignore'))
+                self.logger.debug('Requested port is %s', com_port)
+                command += " -p " + com_port.encode('ascii', 'ignore')
 
-        executing_data.append(file_to_load.name.encode('ascii', 'ignore').replace('\\', '/'))
+        # Add target file
+        command += ' ' + file_to_load.name.encode('ascii', 'ignore').replace('\\', '/')
 
-        print(executing_data)
-        self.logger.info("Executing process %s", executing_data)
+        # Download
+        success, out, err = loader(self, command)
 
-        try:
-            if platform.system() == "Windows":
-                startupinfo = subprocess.STARTUPINFO()
-                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
-                process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
-            else:
-                process = subprocess.Popen(executing_data, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-            out, err = process.communicate()
-            self.logger.info("Load result is: %s", process.returncode)
-            self.logger.debug("Load error string: %s", err)
-            self.logger.debug("Load output string: %s", out)
-
-            if process.returncode == 0:
-                success = True
-            else:
-                success = False
-
-            self.loading = False
-            return success, out or '', err or ''
-
-        except OSError as ex:
-            self.logger.error("%s", ex.message)
+        # Return results
+        return success, out or '', err or ''
 
 
 def loader(self, cmdOptions):
     # Launch Propeller Loader with cmdOptions and return True/False, output and error string
     try:
+        self.logger.debug('Loader command: %s', self.appdir + self.loaderExe[platform.system()] + ' ' + cmdOptions)
+
         if platform.system() == "Windows":
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -158,8 +131,7 @@ def loader(self, cmdOptions):
         out, err = process.communicate()
 
         if process.returncode:
-            self.logger.error("Error result: %s", process.returncode)
-            self.logger.error("Error string: %s", err)
+            self.logger.error("Error result: %s - %s", process.returncode, err)
         self.logger.debug("Loader response: %s", out)
 
         if process.returncode == 0:
