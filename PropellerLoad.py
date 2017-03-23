@@ -58,14 +58,14 @@ class PropellerLoad:
         self.logger.info("Generating ports list")
 
         # Get COM ports
-        success, out, err = loader(self, ["-P"])
+        (success, out, err) = loader(self, ["-P"])
         if success:
             self.ports = out.splitlines()
         else:
             self.logger.debug('COM Port request returned %s', err)
  
         # Get Wi-Fi ports
-        success, out, err = loader(self, ["-W"])
+        (success, out, err) = loader(self, ["-W"])
         if success:
             self.wports = out.splitlines()
             # Extract Wi-Fi module names and sort them
@@ -116,7 +116,7 @@ class PropellerLoad:
         command.extend([file_to_load.name.encode('ascii', 'ignore').replace('\\', '/')])
 
         # Download
-        success, out, err = loader(self, command)
+        (success, out, err) = loader(self, command)
 
         # Return results
         return success, out or '', err or ''
