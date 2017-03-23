@@ -101,13 +101,15 @@ class PropellerLoad:
             targetWiFi = [l for l in self.wports if isWiFiName(l, com_port)]
             if len(targetWiFi) == 1:
                 self.logger.debug('Requested port %s is at %s', com_port, getWiFiIP(targetWiFi[0]))            
-                command += ["-i", getWiFiIP(targetWiFi[0]).encode('ascii', 'ignore')]
+                command.extend(["-i"])
+                command.extend([getWiFiIP(targetWiFi[0]).encode('ascii', 'ignore')])
             else:
                 self.logger.debug('Requested port is %s', com_port)
-                command += ["-p", com_port.encode('ascii', 'ignore')]
+                command.extend(["-p"])
+                command.extend([com_port.encode('ascii', 'ignore')])
 
         # Add target file
-        command += [file_to_load.name.encode('ascii', 'ignore').replace('\\', '/')]
+        command.extend([file_to_load.name.encode('ascii', 'ignore').replace('\\', '/')])
 
         # Download
         success, out, err = loader(self, command)
@@ -124,9 +126,9 @@ def loader(self, cmdOptions):
         if platform.system() == "Windows":
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            process = subprocess.Popen([self.appdir + self.loaderExe[platform.system()], [cmdOptions]], stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
+            process = subprocess.Popen([self.appdir + self.loaderExe[platform.system()], cmdOptions], stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
         else:
-            process = subprocess.Popen([self.appdir + self.loaderExe[platform.system()], [cmdOptions]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.Popen([self.appdir + self.loaderExe[platform.system()], cmdOptions], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         out, err = process.communicate()
 
