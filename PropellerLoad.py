@@ -19,6 +19,7 @@ class PropellerLoad:
 
 
     def __init__(self):
+
         self.logger = logging.getLogger('blockly.loader')
         self.logger.info('Creating loader logger.')
 
@@ -49,7 +50,8 @@ class PropellerLoad:
 
 
     def get_ports(self):
-        self.logger.info('Get ports')
+        # Find COM/Wi-Fi serial ports
+        self.logger.info('Received port list request')
 
         # Return last results if we're currently downloading
         if self.loading:
@@ -67,8 +69,9 @@ class PropellerLoad:
         # Get Wi-Fi ports
         (success, out, err) = loader(self, ["-W"])
         if success:
+            # Save Wi-Fi port record(s)
             self.wports = out.splitlines()
-            # Extract Wi-Fi module names and sort them
+            # Extract Wi-Fi module names (from Wi-Fi records) and sort them
             wnames = []
             for i in range(len(self.wports)):
               wnames.extend([getWiFiName(self.wports[i])])
@@ -76,24 +79,31 @@ class PropellerLoad:
         else:
             self.logger.debug('WiFi Port request returned %s', err)
 
+        # Append Wi-Fi ports to COM ports list
         self.ports.extend(wnames)
-        self.logger.debug('Port count: %s', len(self.ports))
+        self.logger.debug('Found %s ports', len(self.ports))
 
         return self.ports
 
 
     def download(self, action, file_to_load, com_port):
+        # Download application to Propeller
         self.loading = True
 
-        # Patch until we figure out why the __init__ is not getting called
+        # Patch - see if __init__ is back in full operation
         if not self.appdir or self.appdir == "" or self.appdir == "/":
-            # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
-            self.appdir = os.path.dirname(os.path.realpath(__file__))
-            if self.appdir == "" or self.appdir == "/":
-                # launch path is blank; try extracting from argv
-                self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
+            self.logger.info('ERROR: LOADER FOLDER NOT FOUND!')
+            return False, ' ', ' '
+#        Patch below removed temporarily during platform testing
+#        # Patch until we figure out why the __init__ is not getting called
+#        if not self.appdir or self.appdir == "" or self.appdir == "/":
+#            # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
+#            self.appdir = os.path.dirname(os.path.realpath(__file__))
+#            if self.appdir == "" or self.appdir == "/":
+#                # launch path is blank; try extracting from argv
+#                self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
-        # Set command download to RAM or EEPROM and run afterwards
+        # Set command download to RAM or EEPROM and to run afterward download
         command = []
         if self.loaderAction[action]["compile-options"] != "":
             # if RAM/EEPROM compile-option not empty, add it to the list
@@ -102,12 +112,15 @@ class PropellerLoad:
 
         # Add requested port
         if com_port is not None:
+            # Find port(s) named com_port
             targetWiFi = [l for l in self.wports if isWiFiName(l, com_port)]
-            if len(targetWiFi) == 1:
+            if len(targetWiFi) > 0:
+                # Found Wi-Fi match
                 self.logger.debug('Requested port %s is at %s', com_port, getWiFiIP(targetWiFi[0]))            
                 command.extend(["-i"])
                 command.extend([getWiFiIP(targetWiFi[0]).encode('ascii', 'ignore')])
             else:
+                # Not Wi-Fi match, should be COM port
                 self.logger.debug('Requested port is %s', com_port)
                 command.extend(["-p"])
                 command.extend([com_port.encode('ascii', 'ignore')])
@@ -130,7 +143,7 @@ def loader(self, cmdOptions):
         cmdLine = [self.appdir + self.loaderExe[platform.system()]]
         cmdLine.extend(cmdOptions)
 
-        self.logger.info('Running loader command: %s', cmdLine)
+        self.logger.debug('Running loader command: %s', cmdLine)
 
         # Run command
         if platform.system() == "Windows":
