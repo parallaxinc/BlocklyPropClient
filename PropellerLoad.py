@@ -88,51 +88,57 @@ class PropellerLoad:
 
     def download(self, action, file_to_load, com_port):
         # Download application to Propeller
+        # Set loading flag to prevent interruption
         self.loading = True
 
-        # Patch - see if __init__ is back in full operation
-        if not self.appdir or self.appdir == "" or self.appdir == "/":
-            self.logger.info('ERROR: LOADER FOLDER NOT FOUND!')
-            return False, ' ', ' '
-#        Patch below removed temporarily during platform testing
-#        # Patch until we figure out why the __init__ is not getting called
-#        if not self.appdir or self.appdir == "" or self.appdir == "/":
-#            # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
-#            self.appdir = os.path.dirname(os.path.realpath(__file__))
-#            if self.appdir == "" or self.appdir == "/":
-#                # launch path is blank; try extracting from argv
-#                self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
+        try:
+            # Patch - see if __init__ is back in full operation
+            if not self.appdir or self.appdir == "" or self.appdir == "/":
+                self.logger.info('ERROR: LOADER FOLDER NOT FOUND!')
+                return False, ' ', ' '
+#            Patch below removed temporarily during platform testing
+#            # Patch until we figure out why the __init__ is not getting called
+#            if not self.appdir or self.appdir == "" or self.appdir == "/":
+#                # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
+#                self.appdir = os.path.dirname(os.path.realpath(__file__))
+#                if self.appdir == "" or self.appdir == "/":
+#                    # launch path is blank; try extracting from argv
+#                    self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
-        # Set command download to RAM or EEPROM and to run afterward download
-        command = []
-        if self.loaderAction[action]["compile-options"] != "":
-            # if RAM/EEPROM compile-option not empty, add it to the list
-            command.extend([self.loaderAction[action]["compile-options"]])
-        command.extend(["-r"])
+            # Set command download to RAM or EEPROM and to run afterward download
+            command = []
+            if self.loaderAction[action]["compile-options"] != "":
+                # if RAM/EEPROM compile-option not empty, add it to the list
+                command.extend([self.loaderAction[action]["compile-options"]])
+            command.extend(["-r"])
 
-        # Add requested port
-        if com_port is not None:
-            # Find port(s) named com_port
-            targetWiFi = [l for l in self.wports if isWiFiName(l, com_port)]
-            if len(targetWiFi) > 0:
-                # Found Wi-Fi match
-                self.logger.debug('Requested port %s is at %s', com_port, getWiFiIP(targetWiFi[0]))            
-                command.extend(["-i"])
-                command.extend([getWiFiIP(targetWiFi[0]).encode('ascii', 'ignore')])
-            else:
-                # Not Wi-Fi match, should be COM port
-                self.logger.debug('Requested port is %s', com_port)
-                command.extend(["-p"])
-                command.extend([com_port.encode('ascii', 'ignore')])
+            # Add requested port
+            if com_port is not None:
+                # Find port(s) named com_port
+                targetWiFi = [l for l in self.wports if isWiFiName(l, com_port)]
+                if len(targetWiFi) > 0:
+                    # Found Wi-Fi match
+                    self.logger.debug('Requested port %s is at %s', com_port, getWiFiIP(targetWiFi[0]))
+                    command.extend(["-i"])
+                    command.extend([getWiFiIP(targetWiFi[0]).encode('ascii', 'ignore')])
+                else:
+                    # Not Wi-Fi match, should be COM port
+                    self.logger.debug('Requested port is %s', com_port)
+                    command.extend(["-p"])
+                    command.extend([com_port.encode('ascii', 'ignore')])
 
-        # Add target file
-        command.extend([file_to_load.name.encode('ascii', 'ignore').replace('\\', '/')])
+            # Add target file
+            command.extend([file_to_load.name.encode('ascii', 'ignore').replace('\\', '/')])
 
-        # Download
-        (success, out, err) = loader(self, command)
+            # Download
+            (success, out, err) = loader(self, command)
 
-        # Return results
-        return success, out or '', err or ''
+            # Return results
+            return success, out or '', err or ''
+
+        finally:
+            # Done, clear loading flag to process other events
+            self.loading = False
 
 
 def loader(self, cmdOptions):
