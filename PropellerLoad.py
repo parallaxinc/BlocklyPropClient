@@ -63,6 +63,7 @@ class PropellerLoad:
         (success, out, err) = loader(self, ["-P"])
         if success:
             self.ports = out.splitlines()
+            self.ports.sort(None, None, False)
         else:
             self.logger.debug('COM Port request returned %s', err)
  
