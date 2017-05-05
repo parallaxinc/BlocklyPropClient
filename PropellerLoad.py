@@ -138,9 +138,10 @@ class PropellerLoad:
             if com_port is not None:
                 # Determine port type and insert into command
                 wlports = [wirelessport for wirelessport in self.portRec if wirelessport[prName] != ""]
-                if com_port in wlports:
+                wlnames = [names[prUID] for names in wlports]
+                if com_port in wlnames:
                     # Found wireless port match
-                    IPAddr = [wirelessport[prIP] for wirelessport in wlports][wlports.index(com_port)]
+                    IPAddr = [ips[prIP] for ips in wlports][wlnames.index(com_port)]
                     self.logger.debug('Requested port %s is at %s', com_port, IPAddr)
                     command.extend(["-i"])
                     command.extend([IPAddr.encode('ascii', 'ignore')])
