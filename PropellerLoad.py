@@ -224,4 +224,4 @@ def strAfter(string, startStr):
     if sPos == -1: return None
     sPos += len(startStr)
     # Return string after
-    return string[sPos:-1]
+    return string[sPos:]
