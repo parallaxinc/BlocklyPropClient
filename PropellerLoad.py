@@ -10,23 +10,33 @@ __author__ = 'Michel'
 module_logger = logging.getLogger('blockly.loader')
 
 
-# Elements of WiFi Port Records (wports)
-wpUID  = 0
-wpName = 1
-wpIP   = 2
-wpMAC  = 3
-wpLife = 4
+# Elements of Port Records (portRec)
+prUID  = 0
+prName = 1
+prIP   = 2
+prMAC  = 3
+prLife = 4
 
-# Max lifetime+1 for WiFi Port Records to remain without refresh
-MaxLife = 4
+# Max lifetime+1 for wired (w) and wifi (wf) Port Records to remain without refresh
+wMaxLife = 2
+wfMaxLife = 4
+
+# Wi-Fi Record Headers
+wfNameHdr = "Name: '"
+wfIPHdr   = "', IP: "
+wfMACHdr  = ", MAC: "
 
 
 class PropellerLoad:
     loading = False
-    # COM & WiFi-UID (unique name) ports list
+    discovering = False
+    # "Unique identifier" ports list
     ports = []
-    # WiFi Port Record list
-    wports = []
+    # Port Record list- contains wired (UID) and wireless ports (UID, Name, IP, MAC)
+    portRec = []
+    # Lists for manipulation
+    wnames = []
+    wlnames = []
 
 
     def __init__(self):
@@ -61,39 +71,41 @@ class PropellerLoad:
 
 
     def get_ports(self):
-        # Find COM/Wi-Fi serial ports
-        self.logger.info('Received port list request')
-
-        # Return last results if we're currently downloading
-        if self.loading:
+        # Search for wired/wireless serial ports
+        # Return previous results if we're currently downloading to a port or discovering ports
+        if self.loading or self.discovering:
             return self.ports
 
-        self.logger.info("Generating ports list")
+        self.logger.info("Generating new ports list")
+        # Set discovering flag to prevent interruption
+        self.discovering = True
 
-        # Get COM ports
-        (success, out, err) = loader(self, ["-P"])
-        if success:
-            self.ports = out.splitlines()
-            self.ports.sort(None, None, False)
-        else:
-            self.logger.debug('COM Port request returned %s', err)
+        try:
+            # Find wired & wireless serial ports
+            (success, out, err) = loader(self, ["-P", "-W"])
+            # Process wired response
+            if success:
+                # Update port records (in self.portRec)
+                updatePorts(self, out.splitlines())
+                # Extract unique port names (UID; from port records) and sort them alphabetically
+                wnames = [wiredport[prUID] for wiredport in self.portRec if wiredport[prName] == ""]
+                wnames.sort(None, None, False)
+                wlnames = [wirelessport[prUID] for wirelessport in self.portRec if wirelessport[prName] != ""]
+                wlnames.sort(None, None, False)
+                # Assign to return list (with wired group on top, wireless group below) in a single step
+                # to avoid partial results being used by parallel calling process
+                self.ports = wnames + wlnames
+                self.logger.debug('Found %s ports', len(self.ports))
+            else:
+                # Error with external loader
+                self.logger.error('Serial port request returned %s', err)
+                self.ports = []
  
-        # Get Wi-Fi ports
-        (success, out, err) = loader(self, ["-W"])
-        if success:
-            # Save Wi-Fi port records (in self.wports)
-            updateWiFiPorts(self, out.splitlines())
-            # Extract unique Wi-Fi module names (UID; from Wi-Fi records) and sort them
-            wnames = [wifiports[wpUID] for wifiports in self.wports]
-            wnames.sort(None, None, False)
-        else:
-            self.logger.debug('WiFi Port request returned %s', err)
+            return self.ports
 
-        # Append Wi-Fi ports to COM ports list
-        self.ports.extend(wnames)
-        self.logger.debug('Found %s ports', len(self.ports))
-
-        return self.ports
+        finally:
+            # Done, clear discovering flag to process other events
+            self.discovering = False
 
 
     def download(self, action, file_to_load, com_port):
@@ -115,25 +127,25 @@ class PropellerLoad:
 #                    # launch path is blank; try extracting from argv
 #                    self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
-            # Set command download to RAM or EEPROM and to run afterward download
+            # Set command to download to RAM or EEPROM and to run afterward download
             command = []
             if self.loaderAction[action]["compile-options"] != "":
                 # if RAM/EEPROM compile-option not empty, add it to the list
                 command.extend([self.loaderAction[action]["compile-options"]])
             command.extend(["-r"])
 
-            # Add requested port
+            # Specify requested port
             if com_port is not None:
-                # Find port(s) named com_port
-                if com_port in [wifiports[wpUID] for wifiports in self.wports]:
-                    # Found Wi-Fi match
-                    idx = [wifiports[wpUID] for wifiports in self.wports].index(com_port)
-                    IPAddr = [wifiports[wpIP] for wifiports in self.wports][idx]
+                # Determine port type and insert into command
+                wlports = [wirelessport for wirelessport in self.portRec if wirelessport[prName] != ""]
+                if com_port in wlports:
+                    # Found wireless port match
+                    IPAddr = [wirelessport[prIP] for wirelessport in wlports][wlports.index(com_port)]
                     self.logger.debug('Requested port %s is at %s', com_port, IPAddr)
                     command.extend(["-i"])
                     command.extend([IPAddr.encode('ascii', 'ignore')])
                 else:
-                    # Not Wi-Fi match, should be COM port
+                    # Not wireless port match, should be wired port
                     self.logger.debug('Requested port is %s', com_port)
                     command.extend(["-p"])
                     command.extend([com_port.encode('ascii', 'ignore')])
@@ -190,33 +202,43 @@ def loader(self, cmdOptions):
         return False, '', 'Exception: OSError'
 
 
-def updateWiFiPorts(self, wstrings):
-# Merge wstrings into WiFi Ports list
+def updatePorts(self, strings):
+# Merge strings into Port Record list
 # Ensures unique entries (UIDs), updates existing entries, and removes ancient entries
-# Records "age" with each update unless refreshed by a matching port; those older than MaxLife-1 are considered ancient
-    for newPort in wstrings:
-        # Search for MAC address in known ports
-        if not getWiFiMAC(newPort) in [port[wpMAC] for port in self.wports]:
-            # No MAC match, enter as unique port record
-            enterUniqueWiFiPort(self, newPort)
-        else:
-            # Found MAC match, update record as necessary
-            idx = [port[wpMAC] for port in self.wports].index(getWiFiMAC(newPort))
-            if self.wports[idx][wpName] == getWiFiName(newPort):
-                # Name hasn't changed; leave Name and UID, update IP and Life
-                self.wports[idx][wpIP] = getWiFiIP(newPort)
-                self.wports[idx][wpLife] = MaxLife
+# Records "age" with each update unless refreshed by a matching port; those older than xMaxLife-1 are considered ancient
+    for newPort in strings:
+        if not isWiFiStr(newPort):
+            # Wired port- search for existing identifier
+            if newPort in [port[prUID] for port in self.portRec]:
+                # Found existing- just refresh life
+                self.portRec[[port[prUID] for port in self.portRec].index(newPort)][prLife] = wMaxLife
             else:
-                # Name has changed; replace entire record with guaranteed-unique entry
-                self.wports.pop(idx)
+                # No match- create new entry (UID, n/a, n/a, n/a, MaxLife)
+                self.portRec.append([newPort, '', '', '', wMaxLife])
+        else:
+            # Wireless port- search for its MAC address within known ports
+            if not getWiFiMAC(newPort) in [port[prMAC] for port in self.portRec]:
+                # No MAC match- enter as unique port record
                 enterUniqueWiFiPort(self, newPort)
+            else:
+                # Found MAC match- update record as necessary
+                idx = [port[prMAC] for port in self.portRec].index(getWiFiMAC(newPort))
+                if self.portRec[idx][prName] == getWiFiName(newPort):
+                    # Name hasn't changed- leave Name and UID, update IP and Life
+                    self.portRec[idx][prIP] = getWiFiIP(newPort)
+                    self.portRec[idx][prLife] = wfMaxLife
+                else:
+                    # Name has changed- replace entire record with guaranteed-unique entry
+                    self.portRec.pop(idx)
+                    enterUniqueWiFiPort(self, newPort)
+
 
     # Age records
-    for port in self.wports:
-        port[wpLife] = port[wpLife] - 1
+    for port in self.portRec:
+        port[prLife] = port[prLife] - 1
     # Remove ancients
-    while 0 in [port[wpLife] for port in self.wports]:
-        self.wports.pop([port[wpLife] for port in self.wports].index(0))
+    while 0 in [port[prLife] for port in self.portRec]:
+        self.portRec.pop([port[prLife] for port in self.portRec].index(0))
 
 
 def enterUniqueWiFiPort(self, newPort):
@@ -230,8 +252,8 @@ def enterUniqueWiFiPort(self, newPort):
 
     # Check for unique name (UID)
     Size = 1
-    while UID in [port[wpUID] for port in self.wports]:
-        # Name is duplicate; modify for unique name
+    while UID in [port[prUID] for port in self.portRec]:
+        # Name is duplicate- modify for unique name
         UID = Name + Modifier[-Size:]
         Size += 1
         if Size == len(Modifier):
@@ -240,9 +262,13 @@ def enterUniqueWiFiPort(self, newPort):
             Size = 0
 
     # UID is unique, create new entry (UID, Name, IP, MAC, MaxLife)
-    self.wports.append([UID, getWiFiName(newPort), getWiFiIP(newPort), getWiFiMAC(newPort), MaxLife])
+    self.portRec.append([UID, getWiFiName(newPort), getWiFiIP(newPort), getWiFiMAC(newPort), wfMaxLife])
 
 
+
+def isWiFiStr(string):
+# Return True if string is a Wi-Fi record string, False otherwise
+    return (string.find(wfNameHdr) > -1) and (string.find(wfIPHdr) > -1) and (string.find(wfMACHdr) > -1)
 
 
 def isWiFiName(string, wifiName):
@@ -252,17 +278,17 @@ def isWiFiName(string, wifiName):
 
 def getWiFiName(string):
 # Return Wi-Fi Module Name from string, or None if not found
-    return strBetween(string, "Name: '", "', IP: ")
+    return strBetween(string, wfNameHdr, wfIPHdr)
 
 
 def getWiFiIP(string):
 # Return Wi-Fi Module IP address from string, or None if not found
-    return strBetween(string, "', IP: ", ", MAC: ")
+    return strBetween(string, wfIPHdr, wfMACHdr)
 
 
 def getWiFiMAC(string):
 # Return Wi-Fi Module MAC address from string, or None if not found
-    return strAfter(string, ", MAC: ")
+    return strAfter(string, wfMACHdr)
 
 
 def strBetween(string, startStr, endStr):
