@@ -10,11 +10,22 @@ __author__ = 'Michel'
 module_logger = logging.getLogger('blockly.loader')
 
 
+# Elements of WiFi Port Records (wports)
+wpUID  = 0
+wpName = 1
+wpIP   = 2
+wpMAC  = 3
+wpLife = 4
+
+# Max lifetime+1 for WiFi Port Records to remain without refresh
+MaxLife = 4
+
+
 class PropellerLoad:
     loading = False
-    # COM & WiFi-Name ports list
+    # COM & WiFi-UID (unique name) ports list
     ports = []
-    # Full WiFi ports list
+    # WiFi Port Record list
     wports = []
 
 
@@ -69,12 +80,10 @@ class PropellerLoad:
         # Get Wi-Fi ports
         (success, out, err) = loader(self, ["-W"])
         if success:
-            # Save Wi-Fi port record(s)
-            self.wports = out.splitlines()
-            # Extract Wi-Fi module names (from Wi-Fi records) and sort them
-            wnames = []
-            for i in range(len(self.wports)):
-              wnames.extend([getWiFiName(self.wports[i])])
+            # Save Wi-Fi port records (in self.wports)
+            updateWiFiPorts(self, out.splitlines())
+            # Extract unique Wi-Fi module names (UID; from Wi-Fi records) and sort them
+            wnames = [wifiports[wpUID] for wifiports in self.wports]
             wnames.sort(None, None, False)
         else:
             self.logger.debug('WiFi Port request returned %s', err)
@@ -115,12 +124,13 @@ class PropellerLoad:
             # Add requested port
             if com_port is not None:
                 # Find port(s) named com_port
-                targetWiFi = [l for l in self.wports if isWiFiName(l, com_port)]
-                if len(targetWiFi) > 0:
+                if com_port in [wifiports[wpUID] for wifiports in self.wports]:
                     # Found Wi-Fi match
-                    self.logger.debug('Requested port %s is at %s', com_port, getWiFiIP(targetWiFi[0]))
+                    idx = [wifiports[wpUID] for wifiports in self.wports].index(com_port)
+                    IPAddr = [wifiports[wpIP] for wifiports in self.wports][idx]
+                    self.logger.debug('Requested port %s is at %s', com_port, IPAddr)
                     command.extend(["-i"])
-                    command.extend([getWiFiIP(targetWiFi[0]).encode('ascii', 'ignore')])
+                    command.extend([IPAddr.encode('ascii', 'ignore')])
                 else:
                     # Not Wi-Fi match, should be COM port
                     self.logger.debug('Requested port is %s', com_port)
@@ -179,7 +189,57 @@ def loader(self, cmdOptions):
         return False, '', 'Exception: OSError'
 
 
+def updateWiFiPorts(self, wstrings):
+# Merge wstrings into WiFi Ports list
+# Ensures unique entries (UIDs), updates existing entries, and removes ancient entries
+# Records "age" with each update unless refreshed by a matching port; those older than MaxLife-1 are considered ancient
+    for newPort in wstrings:
+        # Search for MAC address in known ports
+        if not getWiFiMAC(newPort) in [port[wpMAC] for port in self.wports]:
+            # No MAC match, enter as unique port record
+            enterUniqueWiFiPort(self, newPort)
+        else:
+            # Found MAC match, update record as necessary
+            idx = [port[wpMAC] for port in self.wports].index(getWiFiMAC(newPort))
+            if self.wports[idx][wpName] == getWiFiName(newPort):
+                # Name hasn't changed; leave Name and UID, update IP and Life
+                self.wports[idx][wpIP] = getWiFiIP(newPort)
+                self.wports[idx][wpLife] = MaxLife
+            else:
+                # Name has changed; replace entire record with guaranteed-unique entry
+                self.wports.pop(idx)
+                enterUniqueWiFiPort(self, newPort)
 
+    # Age records
+    for port in self.wports:
+        port[wpLife] = port[wpLife] - 1
+    # Remove ancients
+    while 0 in [port[wpLife] for port in self.wports]:
+        self.wports.pop([port[wpLife] for port in self.wports].index(0))
+
+
+def enterUniqueWiFiPort(self, newPort):
+# Enter newPort as unique port record
+# If name matches another, it will be made unique by appending one or more if its MAC digits
+    # Start with UID = Name
+    Name = getWiFiName(newPort)+'-'
+    UID = Name[:-1]
+    # Prep modifer (MAC address without colons)
+    Modifier = getWiFiMAC(newPort).replace(":", "")
+
+    # Check for unique name (UID)
+    Size = 1
+    while UID in [port[wpUID] for port in self.wports]:
+        # Name is duplicate; modify for unique name
+        UID = Name + Modifier[-Size:]
+        Size += 1
+        if Size == len(Modifier):
+            # Ran out of digits? Repeat Modifier
+            Name = UID
+            Size = 0
+
+    # UID is unique, create new entry (UID, Name, IP, MAC, MaxLife)
+    self.wports.append([UID, getWiFiName(newPort), getWiFiIP(newPort), getWiFiMAC(newPort), MaxLife])
 
 
 
