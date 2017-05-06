@@ -260,7 +260,7 @@ def enterUniqueWiFiPort(self, newPort):
         if Size == len(Modifier):
             # Ran out of digits? Repeat Modifier
             Name = UID
-            Size = 0
+            Size = 1
 
     # UID is unique, create new entry (UID, Name, IP, MAC, MaxLife)
     self.portRec.append([UID, getWiFiName(newPort), getWiFiIP(newPort), getWiFiMAC(newPort), wfMaxLife])
