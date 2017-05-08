@@ -62,15 +62,15 @@ class BlocklyServer(object):
     def ports(self):
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
         self.queue.put((3, 'DEBUG', 'Port list retrieved'))
-        self.logger.debug('Port list retreived')
+        self.logger.debug('Port list request received')
 
         ports = self.propellerLoad.get_ports()
         if len(ports) > 0:
             filtered_ports = []
             for port in ports:
-                self.logger.debug('Port %s discovered.', port)
                 # Filter out Bluetooth ports; they are risky to open and scan
                 if ' bt ' not in port.lower() and 'bluetooth' not in port.lower():
+                    self.logger.debug('Port %s discovered.', port)
                     filtered_ports.append(port)
                 else:
                     self.logger.debug("Port %s filtered from the list.", port)
