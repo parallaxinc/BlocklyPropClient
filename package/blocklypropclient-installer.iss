@@ -61,10 +61,16 @@ procedure RunDriverInstaller;
 var
   ResultCode: Integer;
 begin
-  if not Exec(ExpandConstant('{app}\drivers\Install-Parallax-USB-Drivers-v2.12.16.exe'), '/UpperLeft /Immediate', '', SW_SHOWNORMAL,
-    ewWaitUntilTerminated, ResultCode)
-  then
-    MsgBox('USB Driver Installer failed to run!' + #13#10 +
-      SysErrorMessage(ResultCode), mbError, MB_OK);
+  if not WizardSilent then
+    begin
+    if not Exec(ExpandConstant('{app}\drivers\Install-Parallax-USB-Drivers-v2.12.16.exe'), '/UpperLeft /Immediate', '', SW_SHOWNORMAL,
+      ewWaitUntilTerminated, ResultCode)
+    then
+      MsgBox('USB Driver Installer failed to run!' + #13#10 +
+        SysErrorMessage(ResultCode), mbError, MB_OK)
+    end
+  else
+    Exec(ExpandConstant('{app}\drivers\Install-Parallax-USB-Drivers-v2.12.16.exe'), '/Quiet', '', SW_SHOWNORMAL,
+      ewWaitUntilTerminated, ResultCode);
 end;
 
