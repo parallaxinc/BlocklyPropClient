@@ -1,7 +1,7 @@
 #!/bin/sh --
 #
 # This script signs and packages a Mac OS X application bundle.
-# The final package will be created as ../dist/|APP_NAME|-|VERSION|-setup-MacOS.pkg.
+# The final package will be created as ../dist/|APP_NAME|-setup-MacOS.pkg.
 #
 # Requirements for this script are:
 #
@@ -413,7 +413,7 @@ productbuild    --distribution ${RESOURCES}${DIST_DST} \
                 --version $VERSION \
                 --package-path ${DISTRIBUTION} \
                 --sign "$INST_IDENTITY" \
-                ${DISTRIBUTION}${APP_NAME}-${VERSION}-setup-MacOS.pkg
+                ${DISTRIBUTION}${APP_NAME}-setup-MacOS.pkg
 
 echo
 
