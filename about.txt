@@ -1,4 +1,4 @@
-Version: v0.6.4
+Version: v0.7.0
 
 Contributors:
 - Michel Lampo
