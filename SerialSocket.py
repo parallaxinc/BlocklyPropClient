@@ -4,6 +4,7 @@ from time import sleep
 import thread
 import re
 import logging
+import base64
 
 __author__ = 'Michel'
 
@@ -46,20 +47,21 @@ class SerialSocket(WebSocket):
             except SerialException as se:
                 self.logger.error("Failed to connect to %s", port)
                 self.logger.error("Serial exception message: %s", se.message)
-                self.send("Failed to connect to: %s using baud rate %s\n\r(%s)\n\r" % (port, baudrate, se.message))
+                self.send(base64.b64encode("Failed to connect to: %s using baud rate %s\n\r(%s)\n\r" % (port, baudrate, se.message)))
                 return
 
             if self.serial.isOpen():
                 self.logger.info("Serial port %s is open.", port)
-                self.send("Connection established with: %s using baud rate %s\n\r" % (port, baudrate))
+                self.send(base64.b64encode("Connection established with: %s using baud rate %s\n\r" % (port, baudrate)))
                 thread.start_new_thread(serial_poll, (self.serial, self))
             else:
-                self.send("Failed to connect to: %s using baud rate %s\n\r" % (port, baudrate))
+                self.send(base64.b64encode("Failed to connect to: %s using baud rate %s\n\r" % (port, baudrate)))
         else:
             if self.serial.isOpen():
-                self.logger.info("Sending serial data")
-                self.send(message.data)
-                self.serial.write(message.data)
+                #self.send(message.data)
+                data = base64.b64decode(message.data)
+                self.logger.info("Sending data to device: %s", data)
+                self.serial.write(data)
 
     # close serial connection
     def close(self, code=1000, reason=''):
@@ -74,9 +76,9 @@ def serial_poll(serial, socket):
     try:
         while serial.isOpen():
             data = serial.read(serial.inWaiting())
-            if len(data) > 0:
+            if data:
                 module_logger.debug('Data received from device: %s', data)
-                socket.send(data)
+                socket.send(base64.b64encode(data))
             # Wait a half-second before listening again.
             sleep(0.5)
     except SerialException as se:

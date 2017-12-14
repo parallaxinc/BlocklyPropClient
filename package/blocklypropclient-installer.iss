@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "BlocklyPropClient"
-#define MyAppVersion "0.6.4"
+#define MyAppVersion "0.7.0"
 #define MyAppPublisher "Parallax Inc."
 #define MyAppURL "http://blockly.parallax.com/"
 #define MyAppExeName "BlocklyPropClient.exe"
