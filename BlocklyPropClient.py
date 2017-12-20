@@ -229,7 +229,7 @@ class BlocklyPropClient(tk.Tk):
             # read entered values and start server
             self.server_process = multiprocessing.Process(
                 target=BlocklyServer.main,
-                args=(int(self.port.get()), self.version, self.q))
+                args=(int(self.port.get()), self.version, self.app_version, self.q))
 
             self.server_process.start()
 
