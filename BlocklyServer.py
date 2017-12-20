@@ -85,7 +85,7 @@ class BlocklyServer(object):
     @cherrypy.expose(alias='load.action')
     @cherrypy.tools.json_out()
     @cherrypy.tools.allow(methods=['POST'])
-    def load(self, action, binary, extension, comport=None):
+    def load(self, option, action, binary, extension, comport=None):
         if action is None:
             self.logger.error('Load action is undefined.')
             return {
@@ -105,7 +105,7 @@ class BlocklyServer(object):
 
         self.logger.debug('Loading program to device.')
 
-        (success, out, err) = self.propellerLoad.download(action, binary_file, comport)
+        (success, out, err) = self.propellerLoad.download(option, action, binary_file, comport)
         self.queue.put((10, 'INFO', 'Application loaded (%s)' % action))
 
         self.logger.info('Application load complete.')

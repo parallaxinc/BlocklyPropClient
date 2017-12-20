@@ -64,6 +64,12 @@ class PropellerLoad:
             "EEPROM": {"compile-options": "-e"}
         }
 
+        self.loaderOption = {
+            "CODE":         {"loader-options": "-c"},
+            "VERBOSE":      {"loader-options": "-v"},
+            "CODE_VERBOSE": {"loader-options": "-c -v"}
+        }
+
         if not platform.system() in self.loaderExe:
             self.logger.error('The %s platform is not supported at this time.', platform.system())
             print(platform.system() + " is currently unsupported")
@@ -108,7 +114,7 @@ class PropellerLoad:
             self.discovering = False
 
 
-    def download(self, action, file_to_load, com_port):
+    def download(self, option, action, file_to_load, com_port):
         # Download application to Propeller
         # Set loading flag to prevent interruption
         self.loading = True
@@ -127,11 +133,17 @@ class PropellerLoad:
 #                    # launch path is blank; try extracting from argv
 #                    self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
-            # Set command to download to RAM or EEPROM and to run afterward download
+            # Set command options to download to RAM or EEPROM and to run afterward download
             command = []
+
+            if self.loaderOption[option]["loader-options"] != "":
+                # if loader-option not empty, add it to the list
+                command.extend([self.loaderOption[option]["loader-options"]])
+
             if self.loaderAction[action]["compile-options"] != "":
                 # if RAM/EEPROM compile-option not empty, add it to the list
                 command.extend([self.loaderAction[action]["compile-options"]])
+
             command.extend(["-r"])
 
             # Specify requested port
