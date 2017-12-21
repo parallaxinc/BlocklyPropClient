@@ -133,7 +133,7 @@ class PropellerLoad:
 #                    # launch path is blank; try extracting from argv
 #                    self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
-            # Set command options to download to RAM or EEPROM and to run afterward download
+            # Set command options to download to RAM or EEPROM and to run after download
             command = []
 
             if self.loaderOption[option]["loader-options"] != "":
