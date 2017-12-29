@@ -36,7 +36,7 @@ PORT = 6009
 # Please verify that the version number in the local about.txt and the
 # ./package/win-resources/blocklypropclient-installer.iss matches this.
 # -----------------------------------------------------------------------
-VERSION = "0.7.0"
+VERSION = "0.7.5"
 
 
 # Enable logging for functions outside of the class definition
@@ -229,7 +229,7 @@ class BlocklyPropClient(tk.Tk):
             # read entered values and start server
             self.server_process = multiprocessing.Process(
                 target=BlocklyServer.main,
-                args=(int(self.port.get()), self.version, self.q))
+                args=(int(self.port.get()), self.version, self.app_version, self.q))
 
             self.server_process.start()
 

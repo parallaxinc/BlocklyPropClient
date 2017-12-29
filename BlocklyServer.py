@@ -21,11 +21,12 @@ module_logger = logging.getLogger('blockly.server')
 
 class BlocklyServer(object):
 
-    def __init__(self, version, queue):
+    def __init__(self, version, app_version, queue):
         self.logger = logging.getLogger('blockly.server')
         self.logger.info('Creating server logger.')
 
         self.version = version
+        self.app_version = app_version
         self.queue = queue
 
         # Find the path from which application was launched
@@ -47,9 +48,11 @@ class BlocklyServer(object):
     def index(self):
         cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
 
+        # version supports pre-0.99 web clients, version_str supports v0.99+ web clients
         serverinfo = {
             "server": "BlocklyPropHTTP",
-            "version": self.version
+            "version": self.version,
+            "version_str": self.app_version
         }
         self.queue.put((1, 'TRACE', 'Server poll received'))
         self.logger.debug('Server poll received')
@@ -85,7 +88,7 @@ class BlocklyServer(object):
     @cherrypy.expose(alias='load.action')
     @cherrypy.tools.json_out()
     @cherrypy.tools.allow(methods=['POST'])
-    def load(self, action, binary, extension, comport=None):
+    def load(self, option, action, binary, extension, comport=None):
         if action is None:
             self.logger.error('Load action is undefined.')
             return {
@@ -105,7 +108,7 @@ class BlocklyServer(object):
 
         self.logger.debug('Loading program to device.')
 
-        (success, out, err) = self.propellerLoad.download(action, binary_file, comport)
+        (success, out, err) = self.propellerLoad.download(option, action, binary_file, comport)
         self.queue.put((10, 'INFO', 'Application loaded (%s)' % action))
 
         self.logger.info('Application load complete.')
@@ -125,7 +128,7 @@ class BlocklyServer(object):
         handler = cherrypy.request.ws_handler
 
 
-def main(port, version, queue):
+def main(port, version, app_version, queue):
     module_logger.info("Server starting")
     queue.put((10, 'INFO', 'Server starting'))
 
@@ -137,7 +140,7 @@ def main(port, version, queue):
 
     queue.put((10, 'INFO', 'Websocket configured'))
 
-    cherrypy.quickstart(BlocklyServer(version, queue), '/', config={'/serial.connect': {
+    cherrypy.quickstart(BlocklyServer(version, app_version, queue), '/', config={'/serial.connect': {
         'tools.websocket.on': True,
         'tools.websocket.handler_cls': SerialSocket
     }})
