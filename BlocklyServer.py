@@ -1,14 +1,13 @@
-import base64
 import os
 import sys
-import tempfile
 import logging
+import functools
 
 import cherrypy
 from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 
 # BlocklyProp imports
-from SerialSocket import SerialSocket
+from HandleWebSocket import HandleWebSocket
 from PropellerLoad import PropellerLoad
 
 __author__ = 'Michel'
@@ -28,12 +27,13 @@ class BlocklyServer(object):
         self.version = version
         self.app_version = app_version
         self.queue = queue
+        #self.ws_sessions = []
 
         # Find the path from which application was launched
         # realpath expands to full path if __file__ or sys.argv[0] contains just a filename
-	self.appdir = os.path.dirname(os.path.realpath(__file__))
+        self.appdir = os.path.dirname(os.path.realpath(__file__))
         if self.appdir == "" or self.appdir == "/":
-	    # launch path is blank; try extracting from argv
+            # launch path is blank; try extracting from argv
             self.appdir = os.path.dirname(os.path.realpath(sys.argv[0]))
 
         self.logger.debug("BlocklyServer.py: Application started from: %s", self.appdir)
@@ -43,89 +43,29 @@ class BlocklyServer(object):
     propellerLoad = PropellerLoad()
 
     @cherrypy.expose()
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.allow(methods=['GET'])
     def index(self):
-        cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
+        #cherrypy.request.remote.ip
 
-        # version supports pre-0.99 web clients, version_str supports v0.99+ web clients
-        serverinfo = {
-            "server": "BlocklyPropHTTP",
-            "version": self.version,
-            "version_str": self.app_version
-        }
-        self.queue.put((1, 'TRACE', 'Server poll received'))
-        self.logger.debug('Server poll received')
-        return serverinfo
+        #self.queue.put((1, 'TRACE', 'Server poll received'))
+        WebSocketHandler = cherrypy.request.ws_handler
+        self.queue.put((1, 'TRACE', "BlocklyProp connection: " + str(WebSocketHandler.peer_address[1])))
 
+        #print("BlocklyProp connection: " + str(WebSocketHandler.peer_address[1]))
+        # Close all but the existing web socket from 127.0.0.1
+        '''
+        existing = False
+        for ws_session in self.ws_sessions:
+            #print("IP: %s    PORT: %s" % (ws_session.peer_address[0],ws_session.peer_address[1]))
+            #self.queue.put((1, 'TRACE', "Existing: " + str(ws_session.peer_address[1])))
+            if WebSocketHandler.peer_address[0] == ws_session.peer_address[0]:
+                WebSocketHandler.close()
+                existing = True
+                self.queue.put((1, 'TRACE', 'Existing detected, closed: ' + str(WebSocketHandler.peer_address[1])))
 
-    @cherrypy.expose(alias='ports.json')
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.allow(methods=['GET'])
-    def ports(self):
-        cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
-        self.queue.put((3, 'DEBUG', 'Port list retrieved'))
-        self.logger.debug('Port list request received')
-
-        ports = self.propellerLoad.get_ports()
-        if len(ports) > 0:
-            filtered_ports = []
-            for port in ports:
-                # Filter out Bluetooth ports; they are risky to open and scan
-                if ' bt ' not in port.lower() and 'bluetooth' not in port.lower():
-                    self.logger.debug('Port %s discovered.', port)
-                    filtered_ports.append(port)
-                else:
-                    self.logger.debug("Port %s filtered from the list.", port)
-            return filtered_ports
-        else:
-            # No useable ports detected. Need to determine how the browser
-            # handles an empty list of available ports.
-            self.logger.debug("No ports detected. Replying with /dev/null")
-            return '/dev/null'
-
-
-    @cherrypy.expose(alias='load.action')
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.allow(methods=['POST'])
-    def load(self, option, action, binary, extension, comport=None):
-        if action is None:
-            self.logger.error('Load action is undefined.')
-            return {
-                'message': 'Load action is undefined',
-                'success': False
-            }
-
-        cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
-
-        self.logger.debug('Writing program payload to temp file.')
-
-        binary_file = tempfile.NamedTemporaryFile(suffix=extension, delete=False)
-        binary_file.write(base64.b64decode(binary))
-        binary_file.close()
-
-        self.logger.debug('%s saved.', binary_file.name)
-
-        self.logger.debug('Loading program to device.')
-
-        (success, out, err) = self.propellerLoad.download(option, action, binary_file, comport)
-        self.queue.put((10, 'INFO', 'Application loaded (%s)' % action))
-
-        self.logger.info('Application load complete.')
-
-        os.remove(binary_file.name)
-
-        result = {
-            'message': out + err,
-            'success': success
-        }
-        return result
-
-    @cherrypy.expose(alias='serial.connect')
-    def serial_socket(self):
-        cherrypy.response.headers['Access-Control-Allow-Origin'] = '*'
-        self.queue.put((10, 'INFO', 'Serial socket set up'))
-        handler = cherrypy.request.ws_handler
+        if not existing:
+            self.ws_sessions.append(WebSocketHandler)
+        '''
+        pass
 
 
 def main(port, version, app_version, queue):
@@ -134,15 +74,17 @@ def main(port, version, app_version, queue):
 
 #    try:
     # Set cherrypy IP and port details
-    cherrypy.config.update({'server.socket_port': port, 'server.socket_host': '0.0.0.0'})
+    cherrypy.config.update({'server.socket_port': port, 'server.socket_host': '0.0.0.0', 'server.thread_pool': 1})
     WebSocketPlugin(cherrypy.engine).subscribe()
     cherrypy.tools.websocket = WebSocketTool()
 
     queue.put((10, 'INFO', 'Websocket configured'))
 
-    cherrypy.quickstart(BlocklyServer(version, app_version, queue), '/', config={'/serial.connect': {
+    cherrypy.quickstart(BlocklyServer(version, app_version, queue), '/', config={'/': {
         'tools.websocket.on': True,
-        'tools.websocket.handler_cls': SerialSocket
+        'tools.websocket.handler_cls': functools.partial(HandleWebSocket,
+                                                         queue=queue,
+                                                         ),
     }})
 
 

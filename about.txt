@@ -1,10 +1,13 @@
-Version: v0.7.5
+Version: v0.8.0
+
+This version implements a websocket protocol compatible with solo.parallax.com, this allows programming of scribbler S2 hardware from solo.
 
 Contributors:
 - Michel Lampo
 - Vale Tolpegin
 - Jim Ewald
 - Jeff Martin
+- Paul Beyleveld
 
 Repository Source Code: http://github.com/parallaxinc/BlocklyPropClient
 

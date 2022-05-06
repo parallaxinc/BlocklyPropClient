@@ -36,7 +36,7 @@ PORT = 6009
 # Please verify that the version number in the local about.txt and the
 # ./package/win-resources/blocklypropclient-installer.iss matches this.
 # -----------------------------------------------------------------------
-VERSION = "0.7.5"
+VERSION = "0.8.0"
 
 
 # Enable logging for functions outside of the class definition
@@ -246,7 +246,7 @@ class BlocklyPropClient(tk.Tk):
         tkMessageBox.showinfo("Info", "The most recently compiled code has been saved to a file successfully" )
 
     def handle_browser(self):
-        webbrowser.open_new('http://blockly.parallax.com')
+        webbrowser.open_new('https://solo.parallax.com')
 
     def handle_code_browser(self):
         webbrowser.open_new('http://github.com/parallaxinc/BlocklyProp')
