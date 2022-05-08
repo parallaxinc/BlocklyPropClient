@@ -202,6 +202,8 @@ class BlocklyPropClient(tk.Tk):
         monitor.daemon = True
         monitor.start()
 
+        self.handle_connect()
+
     def initialize_menu( self ):
         self.logger.info('Initializing the UI menu')
 

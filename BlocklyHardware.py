@@ -101,7 +101,7 @@ def __is_module_loaded_macos():
 # Windows implementation
 def __is_module_installed_windows():
     try:
-        out, err = Popen('driverquery.exe -v', stdout=PIPE).communicate()
+        out, err = Popen('driverquery.exe -v', stdout=PIPE, shell=True).communicate()
         position = out.find('FT')
         if position > 0:
             __module_logger.debug('FTDI module load state')
@@ -117,7 +117,7 @@ def __is_module_installed_windows():
 
 def __is_module_loaded_windows():
     try:
-        out, err = Popen('driverquery.exe -v', stdout=PIPE).communicate()
+        out, err = Popen('driverquery.exe -v', stdout=PIPE, shell=True).communicate()
         position = out.find('FT')
         if position > 0:
             __module_logger.debug('FTDI module load state')

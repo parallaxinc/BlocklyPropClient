@@ -148,6 +148,10 @@ class HandleWebSocket(WebSocket):
 
             elif data['action'] == 'msg':
                 self.term_message = data['msg']
+                if self.serial.isOpen():
+                    self.queue.put((1, 'TRACE', '-> Data sent to device: ' + str(self.term_message)))
+                    #print "Writing Serial: " + self.term_message
+                    self.serial.write(self.term_message.encode())
 
 
         if response != '':
@@ -265,7 +269,7 @@ def comport_poll(serial, queue, socket, poll_id):
             else:
                 data = serial.read(serial.inWaiting())
                 if data:
-                    queue.put((1, 'TRACE', '+ Data received from device: ' + data))
+                    queue.put((1, 'TRACE', '<- Data received from device: ' + data))
 
                     response = {
                         "type": "serial-terminal",
